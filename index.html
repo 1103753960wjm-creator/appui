@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CozyClean - Warm Scrapbook Prototype</title>
+    <!-- 引入手写字体和衬线体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- 全局纹理与色彩 --- */
+        :root {
+            --bg-paper: #F5F1E6;
+            --text-espresso: #4A3B32;
+            --seal-red: #A84A4A;
+            --stamp-green: #5F7A50; 
+            --stamp-red: #9B3A3A;   
+            --shadow-warm: rgba(74, 59, 50, 0.15);
+            --nav-bg: #EFE9D9;
+        }
+
+        body {
+            background-color: var(--bg-paper);
+            color: var(--text-espresso);
+            font-family: 'Lora', serif;
+            overflow: hidden; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+        }
+
+        /* --- 动画过渡 --- */
+        .fade-active { opacity: 1; transform: translateY(0); transition: all 0.4s ease-out; }
+
+        /* --- 底部 Tab 栏 --- */
+        .nav-bar {
+            background-color: var(--nav-bg);
+            border-top: 1px solid rgba(74, 59, 50, 0.1);
+            height: 70px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.03);
+            z-index: 100;
+        }
+
+        .nav-item {
+            font-family: 'Caveat', cursive;
+            font-size: 1.4rem;
+            opacity: 0.5;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-item.active {
+            opacity: 1;
+            color: var(--seal-red);
+        }
+
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 20px;
+            height: 3px;
+            background: var(--seal-red);
+            border-radius: 10px;
+        }
+
+        /* --- 首页按钮 --- */
+        .wax-seal-btn {
+            width: 160px;
+            height: 160px;
+            background: var(--seal-red);
+            border-radius: 50% 45% 55% 40% / 40% 55% 45% 60%;
+            box-shadow: 
+                inset 4px 4px 10px rgba(255,255,255,0.2),
+                inset -4px -4px 10px rgba(0,0,0,0.2),
+                0 8px 15px rgba(168, 74, 74, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* --- 拍立得卡片 --- */
+        .polaroid-card {
+            background: #fff;
+            width: 320px; height: 440px;
+            padding: 16px 16px 64px 16px; 
+            box-shadow: 0 15px 35px var(--shadow-warm);
+            position: absolute;
+            top: 50%; left: 50%;
+            transform-origin: 50% 100%;
+            background-image: linear-gradient(to bottom right, #ffffff, #fcfaf5);
+            border: 1px solid rgba(0,0,0,0.05);
+            touch-action: none;
+        }
+
+        /* --- 核心：复古印章样式 --- */
+        .stamp-overlay {
+            position: absolute;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            mix-blend-mode: multiply; /* 墨水融合效果 */
+            transition: opacity 0.1s ease-out, transform 0.1s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stamp-design {
+            border: 5px solid currentColor;
+            padding: 10px 20px;
+            font-family: 'Caveat', cursive;
+            font-weight: 700;
+            /* 斑驳纹理遮罩 */
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        .stamp-delete { color: var(--stamp-red); top: 50px; right: 50px; transform: rotate(-15deg) scale(0.8); }
+        .stamp-keep { color: var(--stamp-green); bottom: 100px; left: 50px; transform: rotate(15deg) scale(0.8); }
+
+        /* --- “我的”页面 --- */
+        .profile-header { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
+        .avatar-polaroid { width: 120px; height: 140px; background: white; padding: 8px 8px 25px 8px; box-shadow: 0 5px 15px var(--shadow-warm); transform: rotate(-3deg); margin-bottom: 20px; }
+        .profile-list-item { font-family: 'Patrick Hand', cursive; font-size: 1.3rem; padding: 15px 0; border-bottom: 1px dashed rgba(74, 59, 50, 0.15); display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .vip-badge { background: var(--seal-red); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-family: 'Lora'; margin-left: 10px; vertical-align: middle; }
+
+        /* --- 收据样式 --- */
+        .summary-receipt {
+            background: #fff; width: 320px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(74, 59, 50, 0.1); position: relative; transform: rotate(-1deg);
+            background-image: repeating-linear-gradient(#fff, #fff 31px, #e5e5e5 31px, #e5e5e5 32px);
+        }
+        .summary-receipt::after {
+            content: ''; position: absolute; bottom: -15px; left: 0; width: 100%; height: 15px;
+            background: linear-gradient(-45deg, transparent 10px, #fff 10px), linear-gradient(45deg, transparent 10px, #fff 10px);
+            background-size: 20px 20px;
+        }
+
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col relative">
+
+    <div id="mainContainer" class="flex-1 relative overflow-hidden">
+        <!-- Screen 1: 首页 -->
+        <div id="screenHome" class="absolute inset-0 flex flex-col items-center justify-center fade-active">
+            <div class="absolute top-20 text-center">
+                 <p class="text-2xl opacity-80" style="font-family: 'Caveat', cursive;">Every memory counts</p>
+            </div>
+            <div id="startBtn" class="wax-seal-btn group">
+                <span class="text-white text-2xl leading-none text-center drop-shadow-md" style="font-family: 'Caveat', cursive; transform: rotate(-5deg);">
+                    开始<br><span class="text-lg">5分钟</span><br>整理
+                </span>
+            </div>
+            <div class="absolute bottom-16 text-center">
+                <p class="text-sm tracking-widest opacity-60">把回忆装进信封</p>
+            </div>
+        </div>
+
+        <!-- Screen 2: 清理界面 -->
+        <div id="screenSwiper" class="absolute inset-0 flex flex-col items-center justify-center hidden">
+             <div id="cardStack" class="relative w-full h-full flex items-center justify-center"></div>
+             <div id="footerHint" class="absolute bottom-10 flex gap-10 items-center opacity-40" style="font-family: 'Caveat', cursive; font-size: 1.4rem;">
+                <span>← 左滑删除</span><span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span><span>右滑保留 →</span>
+            </div>
+        </div>
+
+        <!-- Screen 3: 个人中心 -->
+        <div id="screenProfile" class="absolute inset-0 flex flex-col hidden">
+            <div class="profile-header">
+                <div class="avatar-polaroid">
+                    <img src="https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=200&h=200" class="w-full h-full object-cover grayscale-[0.3]">
+                </div>
+                <h2 class="text-3xl" style="font-family: 'Caveat', cursive;">林小舒 <span class="vip-badge">Premium</span></h2>
+                <p class="text-sm opacity-50 font-serif italic mt-1">新手妈妈 · 正在记录宝宝的第102天</p>
+            </div>
+            <div class="px-8 mt-4">
+                <div class="profile-list-item"><span>清理记录 / Records</span><span class="text-sm opacity-60">1,240 张已清理</span></div>
+                <div class="profile-list-item"><span>会员信息 / Membership</span><span class="text-sm text-red-700">永久会员已启用</span></div>
+                <div class="profile-list-item"><span>设置 / Settings</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                <div class="profile-list-item border-none"><span>关于 CozyClean</span><span class="text-xs opacity-30">v1.2.4</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部 Tab 栏 -->
+    <nav class="nav-bar flex justify-around items-center px-4">
+        <div id="tabHome" class="nav-item active flex flex-col items-center cursor-pointer">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span class="mt-1">首页</span>
+        </div>
+        <div id="tabProfile" class="nav-item flex flex-col items-center cursor-pointer">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span class="mt-1">我的</span>
+        </div>
+    </nav>
+
+    <script>
+        let discardedCount = 0;
+        let currentIndex = 0;
+        const photos = [
+            { src: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=600&q=90', date: '宝宝的第一步' },
+            { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=90', date: '阳光灿烂的周日' },
+            { src: 'https://images.unsplash.com/photo-1602631985686-1bb0e2254d3b?auto=format&fit=crop&w=600&q=90', date: '可爱的小脚丫' },
+            { src: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=600&q=90', date: '熟睡的小脸' }
+        ];
+
+        const screens = { home: document.getElementById('screenHome'), swiper: document.getElementById('screenSwiper'), profile: document.getElementById('screenProfile') };
+        const tabs = { home: document.getElementById('tabHome'), profile: document.getElementById('tabProfile') };
+        const stackContainer = document.getElementById('cardStack');
+
+        // 安全获取坐标的辅助函数
+        function getClientX(e) {
+            if (e.clientX !== undefined) return e.clientX;
+            if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
+            if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientX;
+            return 0;
+        }
+
+        function switchScreen(target) {
+            Object.values(screens).forEach(s => { s.classList.add('hidden'); s.classList.remove('fade-active'); });
+            screens[target].classList.remove('hidden');
+            setTimeout(() => screens[target].classList.add('fade-active'), 10);
+            Object.keys(tabs).forEach(k => { tabs[k].classList.toggle('active', target === k || (target === 'swiper' && k === 'home')); });
+        }
+
+        tabs.home.addEventListener('click', () => switchScreen('home'));
+        tabs.profile.addEventListener('click', () => switchScreen('profile'));
+
+        document.getElementById('startBtn').addEventListener('click', () => {
+            switchScreen('swiper');
+            resetCleaning();
+            initCards();
+        });
+
+        function resetCleaning() { currentIndex = 0; discardedCount = 0; stackContainer.innerHTML = ''; document.getElementById('footerHint').style.display = 'flex'; }
+
+        function createCard(photo, index) {
+            const el = document.createElement('div');
+            el.classList.add('polaroid-card', 'flex', 'flex-col');
+            el.style.zIndex = photos.length - index;
+            el.style.transform = `translate(-50%, -50%) rotate(${Math.random()*4-2}deg)`;
+            
+            el.innerHTML = `
+                <div class="photo-area flex-1 overflow-hidden relative bg-gray-100">
+                    <img src="${photo.src}" class="w-full h-full object-cover">
+                </div>
+                <div class="handwritten-date text-center py-4" style="font-family: 'Patrick Hand', cursive;">${photo.date}</div>
+                <div class="stamp-overlay stamp-delete">
+                    <div class="stamp-design rounded-lg flex flex-col items-center">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        <span class="text-xl">DISCARD</span>
+                    </div>
+                </div>
+                <div class="stamp-overlay stamp-keep">
+                    <div class="stamp-design rounded-full flex flex-col items-center">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        <span class="text-xl">KEEP</span>
+                    </div>
+                </div>
+            `;
+            return el;
+        }
+
+        function initCards() { photos.forEach((photo, index) => { const card = createCard(photo, index); stackContainer.appendChild(card); if (index === 0) setupDrag(card); }); }
+
+        function setupDrag(card) {
+            let startX = 0, currentX = 0, isDragging = false;
+            const threshold = window.innerWidth * 0.25;
+            const sDel = card.querySelector('.stamp-delete');
+            const sKeep = card.querySelector('.stamp-keep');
+
+            const down = e => { 
+                isDragging = true; 
+                startX = getClientX(e); 
+                card.style.transition = 'none'; 
+            };
+            
+            const move = e => {
+                if(!isDragging) return;
+                currentX = getClientX(e) - startX;
+                card.style.transform = `translate(calc(-50% + ${currentX}px), -50%) rotate(${currentX*0.08}deg)`;
+                
+                if (currentX < 0) {
+                    const opacity = Math.min(-currentX/threshold, 1);
+                    sDel.style.opacity = opacity;
+                    sDel.style.transform = `rotate(-15deg) scale(${0.8 + opacity * 0.4})`;
+                    sKeep.style.opacity = 0;
+                } else {
+                    const opacity = Math.min(currentX/threshold, 1);
+                    sKeep.style.opacity = opacity;
+                    sKeep.style.transform = `rotate(15deg) scale(${0.8 + opacity * 0.4})`;
+                    sDel.style.opacity = 0;
+                }
+            };
+            
+            const up = () => {
+                if(!isDragging) return; isDragging = false;
+                if(Math.abs(currentX) > threshold) {
+                    if(currentX < 0) discardedCount++;
+                    card.style.transition = 'transform 0.4s ease-in';
+                    card.style.transform = `translate(calc(-50% + ${currentX > 0 ? 1 : -1} * 150vw), -50%)`;
+                    setTimeout(() => { card.remove(); currentIndex++; const next = stackContainer.querySelector('.polaroid-card'); next ? setupDrag(next) : showSummary(); }, 200);
+                } else {
+                    card.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+                    sDel.style.opacity = sKeep.style.opacity = 0;
+                }
+            };
+
+            card.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
+            card.addEventListener('touchstart', down, {passive:true}); card.addEventListener('touchmove', move, {passive:true}); card.addEventListener('touchend', up);
+        }
+
+        function showSummary() {
+            document.getElementById('footerHint').style.display = 'none';
+            const sum = document.createElement('div');
+            sum.className = 'flex flex-col items-center animate-fade-in';
+            sum.innerHTML = `
+                <div class="summary-receipt mb-10">
+                    <h2 class="text-2xl mb-6 border-b border-dashed border-gray-300 pb-2" style="font-family: 'Caveat';">整理小结 / Summary</h2>
+                    <div class="flex justify-between py-2 text-xl" style="font-family: 'Caveat';"><span>已删除</span><span>${discardedCount} 张</span></div>
+                    <div class="flex justify-between py-2 text-xl" style="font-family: 'Caveat';"><span>释放空间</span><span>${(discardedCount*4.2).toFixed(1)} MB</span></div>
+                    <p class="mt-6 text-center text-sm opacity-40 italic">- 辛苦了，深呼吸 -</p>
+                </div>
+                <button onclick="switchScreen('home')" class="px-10 py-3 rounded-full text-white text-xl shadow-lg" style="background: var(--seal-red); font-family: 'Caveat';">再整一次</button>
+            `;
+            stackContainer.appendChild(sum);
+        }
+    </script>
+</body>
+</html>
