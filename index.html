@@ -1,333 +1,770 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CozyClean - Warm Scrapbook Prototype</title>
-    <!-- 引入手写字体和衬线体 -->
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <title>CozyClean v2.3 - 个人中心优化版</title>
+    <!-- 引入高质感字体 -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@400;700&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- 全局纹理与色彩 --- */
+        /* --- 视觉系统 v2.3 --- */
         :root {
-            --bg-paper: #F5F1E6;
-            --text-espresso: #4A3B32;
-            --seal-red: #A84A4A;
-            --stamp-green: #5F7A50; 
-            --stamp-red: #9B3A3A;   
-            --shadow-warm: rgba(74, 59, 50, 0.15);
-            --nav-bg: #EFE9D9;
+            --bg-desk: #E0E0E0;
+            --bg-paper: #FDFBF7;
+            --bg-kraft: #E6D2B5;
+            --text-primary: #5D4037;
+            --text-secondary: #8D6E63;
+            --accent-red: #B74141;
+            --accent-green: #688F4E;
+            --accent-tape: #F0E68C;
+            --nav-bg: #F9F7F2;
         }
 
         body {
+            background-color: var(--bg-desk);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Lora', 'Noto Serif SC', serif;
+            background-image: radial-gradient(#ccc 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* --- 手机外壳仿真 --- */
+        .mobile-frame {
+            width: 390px;
+            height: 844px;
+            /* iPhone 14 尺寸 */
             background-color: var(--bg-paper);
-            color: var(--text-espresso);
-            font-family: 'Lora', serif;
-            overflow: hidden; 
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-        }
-
-        /* --- 动画过渡 --- */
-        .fade-active { opacity: 1; transform: translateY(0); transition: all 0.4s ease-out; }
-
-        /* --- 底部 Tab 栏 --- */
-        .nav-bar {
-            background-color: var(--nav-bg);
-            border-top: 1px solid rgba(74, 59, 50, 0.1);
-            height: 70px;
-            box-shadow: 0 -5px 15px rgba(0,0,0,0.03);
-            z-index: 100;
-        }
-
-        .nav-item {
-            font-family: 'Caveat', cursive;
-            font-size: 1.4rem;
-            opacity: 0.5;
-            transition: all 0.3s;
+            border-radius: 50px;
+            box-shadow:
+                0 0 0 12px #333,
+                0 20px 50px rgba(0, 0, 0, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.05);
             position: relative;
+            overflow: hidden;
+            color: var(--text-primary);
         }
 
-        .nav-item.active {
-            opacity: 1;
-            color: var(--seal-red);
+        .notch {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 35px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 999;
+            pointer-events: none;
         }
 
-        .nav-item.active::after {
+        .texture-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.6;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+        }
+
+        /* --- UI 组件样式 --- */
+
+        .hand-drawn-ring {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 1s ease-out;
+            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.1));
+        }
+
+        .washi-tape-bar {
+            width: 80%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.05);
+            position: relative;
+            margin: 10px auto;
+            mask-image: url("data:image/svg+xml,%3Csvg width='200' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L200 0 L200 20 L0 20 Z' fill='black'/%3E%3C/svg%3E");
+        }
+
+        .washi-tape-fill {
+            height: 100%;
+            background: var(--accent-tape);
+            width: 100%;
+            opacity: 0.8;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, 0.5) 5px, rgba(255, 255, 255, 0.5) 10px);
+            transition: width 0.5s;
+        }
+
+        /* 模式票据 */
+        .mode-carousel {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 25px;
+            scrollbar-width: none;
+        }
+
+        .mode-carousel::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mode-ticket {
+            flex: 0 0 100px;
+            height: 130px;
+            background: #fff;
+            border: 1px dashed #d1c4b0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.2s;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .mode-ticket::before,
+        .mode-ticket::after {
             content: '';
             position: absolute;
-            bottom: -5px;
-            width: 20px;
-            height: 3px;
-            background: var(--seal-red);
-            border-radius: 10px;
+            top: 50%;
+            width: 12px;
+            height: 12px;
+            background: var(--bg-paper);
+            border-radius: 50%;
         }
 
-        /* --- 首页按钮 --- */
-        .wax-seal-btn {
-            width: 160px;
-            height: 160px;
-            background: var(--seal-red);
-            border-radius: 50% 45% 55% 40% / 40% 55% 45% 60%;
-            box-shadow: 
-                inset 4px 4px 10px rgba(255,255,255,0.2),
-                inset -4px -4px 10px rgba(0,0,0,0.2),
-                0 8px 15px rgba(168, 74, 74, 0.4);
+        .mode-ticket::before {
+            left: -6px;
+        }
+
+        .mode-ticket::after {
+            right: -6px;
+        }
+
+        .mode-ticket.active {
+            background: #FFFDF5;
+            border: 1px solid var(--accent-red);
+            transform: translateY(-5px) rotate(-1deg);
+            box-shadow: 0 8px 15px rgba(183, 65, 65, 0.15);
+        }
+
+        /* 火漆按钮 */
+        .wax-seal {
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle at 30% 30%, #D65A5A, #B74141, #8E3232);
+            border-radius: 52% 48% 55% 45% / 45% 55% 45% 55%;
+            box-shadow:
+                inset 5px 5px 15px rgba(255, 255, 255, 0.2),
+                inset -5px -5px 10px rgba(0, 0, 0, 0.3),
+                3px 8px 15px rgba(139, 50, 50, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             cursor: pointer;
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            border: 4px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s;
         }
 
-        /* --- 拍立得卡片 --- */
-        .polaroid-card {
+        .wax-seal:active {
+            transform: scale(0.96);
+        }
+
+        .wax-seal::after {
+            content: '';
+            position: absolute;
+            inset: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        /* 卡片样式 */
+        .card-polaroid {
+            width: 300px;
+            height: 420px;
             background: #fff;
-            width: 320px; height: 440px;
-            padding: 16px 16px 64px 16px; 
-            box-shadow: 0 15px 35px var(--shadow-warm);
-            position: absolute;
-            top: 50%; left: 50%;
-            transform-origin: 50% 100%;
-            background-image: linear-gradient(to bottom right, #ffffff, #fcfaf5);
-            border: 1px solid rgba(0,0,0,0.05);
-            touch-action: none;
+            padding: 12px 12px 60px 12px;
+            box-shadow: 0 10px 25px rgba(93, 64, 55, 0.15);
+            transform-origin: 50% 120%;
+            will-change: transform;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.03'/%3E%3C/svg%3E");
         }
 
-        /* --- 核心：复古印章样式 --- */
-        .stamp-overlay {
+        .card-screenshot {
+            width: 280px;
+            height: 480px;
+            background: #F4F4F4;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            border: 1px dashed #ccc;
+        }
+
+        .card-screenshot img {
+            object-fit: contain;
+            padding: 10px;
+        }
+
+        /* 悬浮撤销标签 */
+        .undo-sticker {
             position: absolute;
-            z-index: 20;
+            bottom: 100px;
+            left: 24px;
+            background: #EFE3C8;
+            color: var(--text-primary);
+            padding: 8px 20px 8px 25px;
+            font-family: 'Patrick Hand';
+            font-size: 1.1rem;
+            transform: rotate(-3deg);
+            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 5% 50%);
+            cursor: pointer;
+            transition: 0.2s;
+            z-index: 60;
+        }
+
+        .undo-sticker:active {
+            transform: rotate(-3deg) scale(0.95);
+        }
+
+        /* 底部导航 */
+        .nav-bar {
+            background: var(--nav-bg);
+            height: 80px;
+            padding-bottom: 20px;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-icon {
+            opacity: 0.4;
+            transition: 0.3s;
+        }
+
+        .nav-icon.active {
+            opacity: 1;
+            color: var(--accent-red);
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 印章 */
+        .stamp-mark {
+            position: absolute;
+            z-index: 50;
             opacity: 0;
             pointer-events: none;
-            mix-blend-mode: multiply; /* 墨水融合效果 */
-            transition: opacity 0.1s ease-out, transform 0.1s ease-out;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            mix-blend-mode: multiply;
         }
-
-        .stamp-design {
-            border: 5px solid currentColor;
-            padding: 10px 20px;
-            font-family: 'Caveat', cursive;
-            font-weight: 700;
-            /* 斑驳纹理遮罩 */
-            -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            mask-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-
-        .stamp-delete { color: var(--stamp-red); top: 50px; right: 50px; transform: rotate(-15deg) scale(0.8); }
-        .stamp-keep { color: var(--stamp-green); bottom: 100px; left: 50px; transform: rotate(15deg) scale(0.8); }
-
-        /* --- “我的”页面 --- */
-        .profile-header { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; }
-        .avatar-polaroid { width: 120px; height: 140px; background: white; padding: 8px 8px 25px 8px; box-shadow: 0 5px 15px var(--shadow-warm); transform: rotate(-3deg); margin-bottom: 20px; }
-        .profile-list-item { font-family: 'Patrick Hand', cursive; font-size: 1.3rem; padding: 15px 0; border-bottom: 1px dashed rgba(74, 59, 50, 0.15); display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .vip-badge { background: var(--seal-red); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-family: 'Lora'; margin-left: 10px; vertical-align: middle; }
-
-        /* --- 收据样式 --- */
-        .summary-receipt {
-            background: #fff; width: 320px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(74, 59, 50, 0.1); position: relative; transform: rotate(-1deg);
-            background-image: repeating-linear-gradient(#fff, #fff 31px, #e5e5e5 31px, #e5e5e5 32px);
-        }
-        .summary-receipt::after {
-            content: ''; position: absolute; bottom: -15px; left: 0; width: 100%; height: 15px;
-            background: linear-gradient(-45deg, transparent 10px, #fff 10px), linear-gradient(45deg, transparent 10px, #fff 10px);
-            background-size: 20px 20px;
-        }
-
     </style>
 </head>
-<body class="h-screen w-screen flex flex-col relative">
 
-    <div id="mainContainer" class="flex-1 relative overflow-hidden">
-        <!-- Screen 1: 首页 -->
-        <div id="screenHome" class="absolute inset-0 flex flex-col items-center justify-center fade-active">
-            <div class="absolute top-20 text-center">
-                 <p class="text-2xl opacity-80" style="font-family: 'Caveat', cursive;">Every memory counts</p>
-            </div>
-            <div id="startBtn" class="wax-seal-btn group">
-                <span class="text-white text-2xl leading-none text-center drop-shadow-md" style="font-family: 'Caveat', cursive; transform: rotate(-5deg);">
-                    开始<br><span class="text-lg">5分钟</span><br>整理
-                </span>
-            </div>
-            <div class="absolute bottom-16 text-center">
-                <p class="text-sm tracking-widest opacity-60">把回忆装进信封</p>
+<body>
+
+    <!-- 手机外壳 -->
+    <div class="mobile-frame">
+        <div class="notch"></div>
+        <div class="texture-overlay"></div>
+
+        <!-- 状态栏 -->
+        <div class="flex justify-between px-6 pt-3 text-xs font-bold opacity-40 select-none relative z-10">
+            <span>22:05</span>
+            <div class="flex gap-1">
+                <div class="w-4 h-2.5 bg-current rounded-sm"></div>
+                <div class="w-0.5 h-1 bg-current rounded-sm mt-0.5"></div>
             </div>
         </div>
 
-        <!-- Screen 2: 清理界面 -->
-        <div id="screenSwiper" class="absolute inset-0 flex flex-col items-center justify-center hidden">
-             <div id="cardStack" class="relative w-full h-full flex items-center justify-center"></div>
-             <div id="footerHint" class="absolute bottom-10 flex gap-10 items-center opacity-40" style="font-family: 'Caveat', cursive; font-size: 1.4rem;">
-                <span>← 左滑删除</span><span class="w-1.5 h-1.5 bg-gray-400 rounded-full"></span><span>右滑保留 →</span>
-            </div>
-        </div>
+        <!-- App 内容 -->
+        <div id="app-content" class="relative h-full flex flex-col pb-[80px]">
 
-        <!-- Screen 3: 个人中心 -->
-        <div id="screenProfile" class="absolute inset-0 flex flex-col hidden">
-            <div class="profile-header">
-                <div class="avatar-polaroid">
-                    <img src="https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=200&h=200" class="w-full h-full object-cover grayscale-[0.3]">
+            <!-- 1. 首页 -->
+            <div id="page-home" class="flex-1 flex flex-col items-center pt-8 fade-in relative z-20">
+                <div class="text-center mb-6">
+                    <!-- 修改 2：个性化问候语 -->
+                    <h1 class="text-2xl font-bold font-serif text-[#5D4037]">晚上好，林小舒</h1>
+                    <p class="text-sm font-hand opacity-60">准备好整理回忆了吗？</p>
                 </div>
-                <h2 class="text-3xl" style="font-family: 'Caveat', cursive;">林小舒 <span class="vip-badge">Premium</span></h2>
-                <p class="text-sm opacity-50 font-serif italic mt-1">新手妈妈 · 正在记录宝宝的第102天</p>
+
+                <!-- 进度环 -->
+                <div class="relative w-40 h-40 mb-8">
+                    <svg class="absolute inset-0 w-full h-full text-gray-200" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-dasharray="5,5" />
+                    </svg>
+                    <svg class="absolute inset-0 w-full h-full text-[#B74141] transform -rotate-90"
+                        viewBox="0 0 100 100">
+                        <circle id="progress-circle" class="hand-drawn-ring" cx="50" cy="50" r="45" fill="none"
+                            stroke="currentColor" stroke-width="4" stroke-linecap="round" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <span id="count-display" class="text-4xl font-hand font-bold text-[#5D4037]">0</span>
+                        <span class="text-xs opacity-50 font-serif">/ 100</span>
+                    </div>
+                </div>
+
+                <!-- 模式选择 -->
+                <div class="w-full mb-6">
+                    <div class="mode-carousel">
+                        <div class="mode-ticket active" onclick="setMode('blitz', this)">
+                            <div class="text-2xl mb-1">⚡️</div>
+                            <div class="font-bold text-xs">闪电战</div>
+                            <div class="text-[9px] opacity-50 uppercase tracking-widest mt-1">Free</div>
+                        </div>
+                        <div class="mode-ticket" onclick="setMode('screenshot', this)">
+                            <div class="text-2xl mb-1">✂️</div>
+                            <div class="font-bold text-xs">截图粉碎</div>
+                            <div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO</div>
+                        </div>
+                        <div class="mode-ticket" onclick="setMode('timeline', this)">
+                            <div class="text-2xl mb-1">⏳</div>
+                            <div class="font-bold text-xs">时光机</div>
+                            <div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 开始按钮 -->
+                <div id="start-btn" class="wax-seal group relative z-30 transition-transform">
+                    <span
+                        class="text-white text-xl text-center leading-tight font-hand transform -rotate-6 drop-shadow-md">
+                        开始<br><span class="text-sm">整理</span>
+                    </span>
+                </div>
+
+                <!-- 体力条 -->
+                <div class="w-full text-center mt-4">
+                    <div class="washi-tape-bar">
+                        <div id="energy-bar" class="washi-tape-fill"></div>
+                    </div>
+                    <span class="text-[10px] opacity-40 font-serif tracking-widest">今日体力</span>
+                </div>
             </div>
-            <div class="px-8 mt-4">
-                <div class="profile-list-item"><span>清理记录 / Records</span><span class="text-sm opacity-60">1,240 张已清理</span></div>
-                <div class="profile-list-item"><span>会员信息 / Membership</span><span class="text-sm text-red-700">永久会员已启用</span></div>
-                <div class="profile-list-item"><span>设置 / Settings</span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
-                <div class="profile-list-item border-none"><span>关于 CozyClean</span><span class="text-xs opacity-30">v1.2.4</span></div>
+
+            <!-- 2. 整理界面 -->
+            <div id="page-swiper"
+                class="absolute inset-0 z-30 bg-[#FDFBF7] hidden flex-col items-center justify-center">
+                <div class="absolute top-12 left-0 w-full px-6 flex justify-between items-center z-40 opacity-50">
+                    <span onclick="goHome()" class="cursor-pointer text-sm font-serif">← 返回</span>
+                    <span class="font-hand">闪电战模式</span>
+                </div>
+
+                <!-- 撤销按钮 -->
+                <div id="undo-btn" class="undo-sticker opacity-50 pointer-events-none">
+                    ↺ 撤销
+                </div>
+
+                <!-- 卡片堆叠 -->
+                <div id="card-stack" class="relative w-full h-full flex items-center justify-center">
+                    <!-- Cards injected via JS -->
+                </div>
+
+                <div id="guide-text"
+                    class="absolute bottom-6 w-full flex justify-center gap-12 font-hand text-lg opacity-40 pointer-events-none">
+                    <span class="text-[#B74141]">丢弃</span>
+                    <span class="text-[#688F4E]">保留</span>
+                </div>
             </div>
+
+            <!-- 3. 我的页面 -->
+            <div id="page-profile" class="flex-1 hidden flex-col pt-12 px-6 fade-in relative z-20 overflow-y-auto">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-20 h-20 bg-white p-1 shadow-md transform -rotate-3" style="border-radius: 4px;">
+                        <img src="https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=200"
+                            class="w-full h-full object-cover grayscale-[0.2]">
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-serif font-bold text-[#5D4037]">林小舒</h2>
+                        <!-- 修改 1：会员标识展示在名称下方 -->
+                        <div id="vip-badge-container" class="mt-2">
+                            <span id="badge-free"
+                                class="inline-block text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">免费版</span>
+                            <span id="badge-pro"
+                                class="hidden inline-block text-[10px] bg-black text-[#F0E68C] px-2 py-0.5 rounded-full border border-[#F0E68C]">永久会员</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-8">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center">
+                        <div class="text-xs opacity-50 font-serif">已释放空间</div>
+                        <div class="text-2xl font-bold font-hand text-[#688F4E]">1.2 <span class="text-sm">GB</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center">
+                        <div class="text-xs opacity-50 font-serif">连续打卡</div>
+                        <div class="text-2xl font-bold font-hand text-[#B74141]">12 <span class="text-sm">天</span></div>
+                    </div>
+                </div>
+
+                <!-- 修改 3：菜单排序与内容调整 -->
+                <div class="space-y-4">
+                    <div
+                        class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer">
+                        <span>历史日志</span>
+                        <span class="opacity-40">→</span>
+                    </div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"
+                        onclick="document.getElementById('paywall').classList.remove('hidden')">
+                        <span>会员中心</span>
+                        <span class="opacity-40">→</span>
+                    </div>
+                    <div
+                        class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer">
+                        <span>设置</span>
+                        <span class="opacity-40">→</span>
+                    </div>
+                    <div
+                        class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer">
+                        <span>关于</span>
+                        <span class="opacity-40">→</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. 时光机（月份选择） -->
+            <div id="page-timeline" class="absolute inset-0 z-30 bg-[#FDFBF7] hidden flex-col">
+                <div class="px-6 py-6 flex items-center justify-between">
+                    <h2 class="text-2xl font-serif font-bold text-[#5D4037]">时光机</h2>
+                    <button onclick="goHome()" class="text-sm font-hand opacity-60">关闭</button>
+                </div>
+                <div class="px-6 pb-20 overflow-y-auto" id="timeline-list">
+                    <!-- Month items injected here -->
+                </div>
+            </div>
+
+            <!-- 付费弹窗 -->
+            <div id="paywall"
+                class="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-6">
+                <div class="bg-[#FFFBF0] w-full max-w-sm p-6 rounded-2xl shadow-2xl relative text-center">
+                    <div class="text-4xl mb-2">👑</div>
+                    <h3 class="text-xl font-bold font-serif mb-2">升级会员</h3>
+                    <p class="text-sm opacity-70 font-hand mb-6">解锁所有模式与无限体力。</p>
+                    <button onclick="unlockPro()"
+                        class="w-full py-3 bg-[#5D4037] text-white rounded-xl font-bold shadow-lg mb-3">立即解锁</button>
+                    <button onclick="document.getElementById('paywall').classList.add('hidden')"
+                        class="text-xs opacity-50 underline">以后再说</button>
+                </div>
+            </div>
+
         </div>
+
+        <!-- 底部 Tab -->
+        <nav class="absolute bottom-0 w-full nav-bar z-40">
+            <div id="tab-home" class="nav-icon active flex flex-col items-center cursor-pointer"
+                onclick="switchTab('home')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span class="text-[10px] font-serif mt-1">整理</span>
+            </div>
+            <div id="tab-me" class="nav-icon flex flex-col items-center cursor-pointer" onclick="switchTab('profile')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span class="text-[10px] font-serif mt-1">我的</span>
+            </div>
+        </nav>
+
     </div>
 
-    <!-- 底部 Tab 栏 -->
-    <nav class="nav-bar flex justify-around items-center px-4">
-        <div id="tabHome" class="nav-item active flex flex-col items-center cursor-pointer">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-            <span class="mt-1">首页</span>
-        </div>
-        <div id="tabProfile" class="nav-item flex flex-col items-center cursor-pointer">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            <span class="mt-1">我的</span>
-        </div>
-    </nav>
-
     <script>
-        let discardedCount = 0;
-        let currentIndex = 0;
+        const state = {
+            count: 0,
+            limit: 100,
+            isPro: false,
+            mode: 'blitz',
+            history: [],
+            selectedMonth: null // 'YYYY-MM'
+        };
+
         const photos = [
-            { src: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=600&q=90', date: '宝宝的第一步' },
-            { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=600&q=90', date: '阳光灿烂的周日' },
-            { src: 'https://images.unsplash.com/photo-1602631985686-1bb0e2254d3b?auto=format&fit=crop&w=600&q=90', date: '可爱的小脚丫' },
-            { src: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=600&q=90', date: '熟睡的小脸' }
+            { src: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&q=80', date: '2023-10-15', label: '宝宝的第一步', type: 'photo' },
+            { src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80', date: '2023-10-20', label: '聊天记录截图', type: 'screenshot' },
+            { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80', date: '2023-09-05', label: '晴朗的周日', type: 'photo' },
+            { src: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=400&q=80', date: '2023-09-12', label: '自然风光', type: 'photo' },
+            { src: 'https://images.unsplash.com/photo-1504297050568-910d24c426d3?auto=format&fit=crop&w=400&q=80', date: '2023-08-28', label: '咖啡时光', type: 'photo' }
         ];
 
-        const screens = { home: document.getElementById('screenHome'), swiper: document.getElementById('screenSwiper'), profile: document.getElementById('screenProfile') };
-        const tabs = { home: document.getElementById('tabHome'), profile: document.getElementById('tabProfile') };
-        const stackContainer = document.getElementById('cardStack');
+        function switchTab(tab) {
+            document.getElementById('page-home').classList.add('hidden');
+            document.getElementById('page-profile').classList.add('hidden');
+            document.getElementById('page-swiper').classList.add('hidden');
 
-        // 安全获取坐标的辅助函数
-        function getClientX(e) {
-            if (e.clientX !== undefined) return e.clientX;
-            if (e.touches && e.touches.length > 0) return e.touches[0].clientX;
-            if (e.changedTouches && e.changedTouches.length > 0) return e.changedTouches[0].clientX;
-            return 0;
+            document.getElementById('tab-home').classList.remove('active');
+            document.getElementById('tab-me').classList.remove('active');
+
+            if (tab === 'home') {
+                document.getElementById('page-home').classList.remove('hidden');
+                document.getElementById('tab-home').classList.add('active');
+            } else {
+                document.getElementById('page-profile').classList.remove('hidden');
+                document.getElementById('tab-me').classList.add('active');
+            }
         }
 
-        function switchScreen(target) {
-            Object.values(screens).forEach(s => { s.classList.add('hidden'); s.classList.remove('fade-active'); });
-            screens[target].classList.remove('hidden');
-            setTimeout(() => screens[target].classList.add('fade-active'), 10);
-            Object.keys(tabs).forEach(k => { tabs[k].classList.toggle('active', target === k || (target === 'swiper' && k === 'home')); });
+        function setMode(mode, el) {
+            if (mode !== 'blitz' && !state.isPro) {
+                document.getElementById('paywall').classList.remove('hidden');
+                return;
+            }
+            state.mode = mode;
+            document.querySelectorAll('.mode-ticket').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
         }
 
-        tabs.home.addEventListener('click', () => switchScreen('home'));
-        tabs.profile.addEventListener('click', () => switchScreen('profile'));
+        function unlockPro() {
+            state.isPro = true;
+            document.getElementById('paywall').classList.add('hidden');
+            // 更新会员标识
+            document.getElementById('badge-free').classList.add('hidden');
+            document.getElementById('badge-pro').classList.remove('hidden');
+            alert("✨ 会员已解锁！");
+        }
 
-        document.getElementById('startBtn').addEventListener('click', () => {
-            switchScreen('swiper');
-            resetCleaning();
-            initCards();
+        document.getElementById('start-btn').addEventListener('click', () => {
+            if (state.mode === 'timeline') {
+                renderTimeline();
+                document.getElementById('page-home').classList.add('hidden');
+                document.getElementById('page-timeline').classList.remove('hidden');
+                document.querySelector('.nav-bar').classList.add('hidden');
+            } else {
+                state.selectedMonth = null;
+                document.getElementById('page-home').classList.add('hidden');
+                document.getElementById('page-swiper').classList.remove('hidden');
+                document.querySelector('.nav-bar').classList.add('hidden');
+                initCards();
+            }
         });
 
-        function resetCleaning() { currentIndex = 0; discardedCount = 0; stackContainer.innerHTML = ''; document.getElementById('footerHint').style.display = 'flex'; }
-
-        function createCard(photo, index) {
-            const el = document.createElement('div');
-            el.classList.add('polaroid-card', 'flex', 'flex-col');
-            el.style.zIndex = photos.length - index;
-            el.style.transform = `translate(-50%, -50%) rotate(${Math.random()*4-2}deg)`;
-            
-            el.innerHTML = `
-                <div class="photo-area flex-1 overflow-hidden relative bg-gray-100">
-                    <img src="${photo.src}" class="w-full h-full object-cover">
-                </div>
-                <div class="handwritten-date text-center py-4" style="font-family: 'Patrick Hand', cursive;">${photo.date}</div>
-                <div class="stamp-overlay stamp-delete">
-                    <div class="stamp-design rounded-lg flex flex-col items-center">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                        <span class="text-xl">DISCARD</span>
-                    </div>
-                </div>
-                <div class="stamp-overlay stamp-keep">
-                    <div class="stamp-design rounded-full flex flex-col items-center">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                        <span class="text-xl">KEEP</span>
-                    </div>
-                </div>
-            `;
-            return el;
+        function goHome() {
+            document.getElementById('page-swiper').classList.add('hidden');
+            document.getElementById('page-timeline').classList.add('hidden');
+            document.getElementById('page-home').classList.remove('hidden');
+            document.querySelector('.nav-bar').classList.remove('hidden');
+            updateDashboard();
         }
 
-        function initCards() { photos.forEach((photo, index) => { const card = createCard(photo, index); stackContainer.appendChild(card); if (index === 0) setupDrag(card); }); }
+        function renderTimeline() {
+            const container = document.getElementById('timeline-list');
+            container.innerHTML = '';
 
-        function setupDrag(card) {
+            // Group photos by month
+            const groups = {};
+            photos.forEach(p => {
+                const month = p.date.substring(0, 7); // YYYY-MM
+                if (!groups[month]) groups[month] = 0;
+                groups[month]++;
+            });
+
+            // Sort months descending
+            const sortedMonths = Object.keys(groups).sort().reverse();
+
+            sortedMonths.forEach(month => {
+                const count = groups[month];
+                const [y, m] = month.split('-');
+
+                const item = document.createElement('div');
+                item.className = 'bg-white p-4 rounded-xl shadow-sm mb-4 flex justify-between items-center cursor-pointer active:scale-95 transition-transform border border-gray-100';
+                item.onclick = () => {
+                    state.selectedMonth = month;
+                    document.getElementById('page-timeline').classList.add('hidden');
+                    document.getElementById('page-swiper').classList.remove('hidden');
+                    initCards();
+                };
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-[#F9F7F2] rounded-full flex items-center justify-center text-xl border border-[#E6D2B5]">
+                            📅
+                        </div>
+                        <div>
+                            <div class="font-bold text-[#5D4037] font-serif text-lg">${y}年 ${m}月</div>
+                            <div class="text-xs text-gray-400 font-hand">${count} 张照片 awaiting</div>
+                        </div>
+                    </div>
+                    <div class="text-[#B74141] font-bold font-hand text-xl">Go →</div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function updateDashboard() {
+            document.getElementById('count-display').innerText = state.count;
+            const offset = 283 - (state.count / 100) * 283;
+            document.getElementById('progress-circle').style.strokeDashoffset = offset;
+
+            const energyPct = Math.max(0, 100 - state.count);
+            document.getElementById('energy-bar').style.width = energyPct + '%';
+        }
+
+        function initCards() {
+            const container = document.getElementById('card-stack');
+            container.innerHTML = '';
+            state.history = [];
+
+            let displayPhotos = [...photos];
+
+            // Filter by mode
+            if (state.mode === 'screenshot') {
+                displayPhotos = displayPhotos.filter(p => p.type === 'screenshot');
+            } else if (state.mode === 'timeline' && state.selectedMonth) {
+                displayPhotos = displayPhotos.filter(p => p.date.startsWith(state.selectedMonth));
+            }
+
+            const sessionPhotos = [...displayPhotos, ...displayPhotos];
+
+            sessionPhotos.forEach((p, i) => {
+                const card = document.createElement('div');
+                card.className = `absolute top-1/2 left-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing 
+                    ${state.mode === 'screenshot' ? 'card-screenshot' : 'card-polaroid'}`;
+                card.style.transform = `translate(-50%, -50%) rotate(${state.mode === 'screenshot' ? 0 : Math.random() * 4 - 2}deg)`;
+                card.style.zIndex = 100 - i;
+
+                card.innerHTML = `
+                    <div class="flex-1 w-full overflow-hidden relative ${state.mode === 'screenshot' ? '' : 'bg-gray-100'}">
+                        <img src="${p.src}" class="w-full h-full ${state.mode === 'screenshot' ? 'object-contain' : 'object-cover'} pointer-events-none">
+                    </div>
+                    ${state.mode === 'screenshot' ? '' : `<div class="py-4 font-hand text-xl opacity-70">${p.label || p.date}</div>`}
+                    
+                    <div class="stamp-mark top-12 right-8 transform -rotate-12 border-4 border-[#B74141] text-[#B74141] p-2 rounded font-hand font-bold text-xl opacity-0 stamp-del">
+                        DISCARD
+                    </div>
+                    <div class="stamp-mark bottom-20 left-8 transform rotate-12 border-4 border-[#688F4E] text-[#688F4E] p-2 rounded-full font-hand font-bold text-xl opacity-0 stamp-keep">
+                        KEEP
+                    </div>
+                `;
+
+                container.appendChild(card);
+                if (i === 0) setupSwipe(card);
+            });
+
+            if (container.children.length === 0) {
+                alert("此模式下暂无照片！");
+                goHome();
+            }
+        }
+
+        function setupSwipe(card) {
             let startX = 0, currentX = 0, isDragging = false;
-            const threshold = window.innerWidth * 0.25;
-            const sDel = card.querySelector('.stamp-delete');
+            const threshold = 100;
+            const sDel = card.querySelector('.stamp-del');
             const sKeep = card.querySelector('.stamp-keep');
 
-            const down = e => { 
-                isDragging = true; 
-                startX = getClientX(e); 
-                card.style.transition = 'none'; 
-            };
-            
-            const move = e => {
-                if(!isDragging) return;
-                currentX = getClientX(e) - startX;
-                card.style.transform = `translate(calc(-50% + ${currentX}px), -50%) rotate(${currentX*0.08}deg)`;
-                
+            const start = (x) => { isDragging = true; startX = x; card.style.transition = 'none'; };
+
+            const move = (x) => {
+                if (!isDragging) return;
+                currentX = x - startX;
+                const rot = currentX * 0.1;
+                card.style.transform = `translate(calc(-50% + ${currentX}px), -50%) rotate(${rot}deg)`;
+
                 if (currentX < 0) {
-                    const opacity = Math.min(-currentX/threshold, 1);
-                    sDel.style.opacity = opacity;
-                    sDel.style.transform = `rotate(-15deg) scale(${0.8 + opacity * 0.4})`;
+                    sDel.style.opacity = Math.min(-currentX / threshold, 1);
                     sKeep.style.opacity = 0;
                 } else {
-                    const opacity = Math.min(currentX/threshold, 1);
-                    sKeep.style.opacity = opacity;
-                    sKeep.style.transform = `rotate(15deg) scale(${0.8 + opacity * 0.4})`;
+                    sKeep.style.opacity = Math.min(currentX / threshold, 1);
                     sDel.style.opacity = 0;
                 }
             };
-            
-            const up = () => {
-                if(!isDragging) return; isDragging = false;
-                if(Math.abs(currentX) > threshold) {
-                    if(currentX < 0) discardedCount++;
-                    card.style.transition = 'transform 0.4s ease-in';
-                    card.style.transform = `translate(calc(-50% + ${currentX > 0 ? 1 : -1} * 150vw), -50%)`;
-                    setTimeout(() => { card.remove(); currentIndex++; const next = stackContainer.querySelector('.polaroid-card'); next ? setupDrag(next) : showSummary(); }, 200);
+
+            const end = () => {
+                if (!isDragging) return; isDragging = false;
+                if (Math.abs(currentX) > threshold) {
+                    const isDel = currentX < 0;
+                    card.style.transition = 'transform 0.4s ease-out';
+                    card.style.transform = `translate(calc(-50% + ${isDel ? -500 : 500}px), -50%) rotate(${isDel ? -45 : 45}deg)`;
+
+                    if (isDel && !state.isPro) state.count++;
+
+                    state.history.push({ card: card.cloneNode(true), isDel });
+                    document.getElementById('undo-btn').classList.remove('opacity-50', 'pointer-events-none');
+
+                    setTimeout(() => {
+                        card.remove();
+                        const nextCard = document.getElementById('card-stack').firstElementChild;
+                        if (nextCard) setupSwipe(nextCard);
+                        else {
+                            alert("本次整理完成！");
+                            goHome();
+                        }
+                    }, 300);
                 } else {
                     card.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
                     card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-                    sDel.style.opacity = sKeep.style.opacity = 0;
+                    sDel.style.opacity = 0; sKeep.style.opacity = 0;
                 }
             };
 
-            card.addEventListener('mousedown', down); window.addEventListener('mousemove', move); window.addEventListener('mouseup', up);
-            card.addEventListener('touchstart', down, {passive:true}); card.addEventListener('touchmove', move, {passive:true}); card.addEventListener('touchend', up);
+            card.addEventListener('touchstart', e => start(e.touches[0].clientX));
+            window.addEventListener('touchmove', e => move(e.touches[0].clientX));
+            window.addEventListener('touchend', end);
+
+            card.addEventListener('mousedown', e => start(e.clientX));
+            window.addEventListener('mousemove', e => move(e.clientX));
+            window.addEventListener('mouseup', end);
         }
 
-        function showSummary() {
-            document.getElementById('footerHint').style.display = 'none';
-            const sum = document.createElement('div');
-            sum.className = 'flex flex-col items-center animate-fade-in';
-            sum.innerHTML = `
-                <div class="summary-receipt mb-10">
-                    <h2 class="text-2xl mb-6 border-b border-dashed border-gray-300 pb-2" style="font-family: 'Caveat';">整理小结 / Summary</h2>
-                    <div class="flex justify-between py-2 text-xl" style="font-family: 'Caveat';"><span>已删除</span><span>${discardedCount} 张</span></div>
-                    <div class="flex justify-between py-2 text-xl" style="font-family: 'Caveat';"><span>释放空间</span><span>${(discardedCount*4.2).toFixed(1)} MB</span></div>
-                    <p class="mt-6 text-center text-sm opacity-40 italic">- 辛苦了，深呼吸 -</p>
-                </div>
-                <button onclick="switchScreen('home')" class="px-10 py-3 rounded-full text-white text-xl shadow-lg" style="background: var(--seal-red); font-family: 'Caveat';">再整一次</button>
-            `;
-            stackContainer.appendChild(sum);
-        }
+        document.getElementById('undo-btn').addEventListener('click', () => {
+            if (state.history.length === 0) return;
+            const last = state.history.pop();
+            const container = document.getElementById('card-stack');
+
+            if (last.isDel) state.count--;
+
+            const card = last.card;
+            card.style.transition = 'none';
+            card.style.transform = `translate(calc(-50% + ${last.isDel ? -500 : 500}px), -50%) rotate(0deg)`;
+            container.insertBefore(card, container.firstChild);
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    card.style.transition = 'transform 0.4s ease-out';
+                    card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+                });
+            });
+
+            setupSwipe(card);
+
+            if (state.history.length === 0) {
+                document.getElementById('undo-btn').classList.add('opacity-50', 'pointer-events-none');
+            }
+        });
+
     </script>
 </body>
+
 </html>
