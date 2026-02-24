@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CozyClean v3.3 - 个人主页原型</title>
+    <title>CozyClean v4.0 - 手账海报生成器 (结算修复版)</title>
     <!-- 引入高质感字体 -->
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- 视觉系统 --- */
+        /* --- 视觉系统 v4.0 --- */
         :root {
             --bg-desk: #E0E0E0;
             --bg-paper: #FDFBF7;
@@ -75,8 +75,7 @@
         /* 卡片样式 */
         .card-screenshot {
             width: 300px; height: 520px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-radius: 2px;
-            position: relative; font-family: 'Courier Prime', monospace; color: #333; display: flex; flex-direction: column;
-            touch-action: none;
+            position: relative; font-family: 'Courier Prime', monospace; color: #333; display: flex; flex-direction: column; touch-action: none;
         }
         .card-polaroid {
             width: 300px; height: 420px; background: #fff; padding: 12px 12px 60px 12px;
@@ -89,37 +88,71 @@
         .stamp-mark { position: absolute; z-index: 50; opacity: 0; pointer-events: none; mix-blend-mode: multiply; }
         .stamp-shred-style { border: 3px double #2D3748; color: #2D3748; padding: 5px 20px; font-family: 'Courier Prime', monospace; font-weight: bold; letter-spacing: 2px; transform: rotate(-15deg); }
 
-        /* 社区动态流样式 */
-        .feed-post {
-            background: #fff; padding: 16px; margin-bottom: 24px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        /* --- v4.0 海报生成器样式 --- */
+        .poster-canvas {
+            width: 300px; height: 533px; /* 9:16 比例 */
+            background-color: #EFE9D9;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
         }
-        .feed-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
         
-        /* 动态九宫格 */
-        .grid-photo-container { display: grid; gap: 4px; width: 100%; border-radius: 6px; overflow: hidden; }
-        .grid-photo-item { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: cover; cursor: pointer; border: 1px solid rgba(0,0,0,0.03); }
-
-        /* 发布页面文本域 */
-        .publish-textarea {
-            width: 100%; height: 100px; background: transparent; resize: none; outline: none;
-            font-family: 'Patrick Hand', cursive; font-size: 1.3rem; line-height: 1.8;
-            background-image: repeating-linear-gradient(transparent, transparent 31px, rgba(210, 180, 140, 0.4) 31px, rgba(210, 180, 140, 0.4) 32px);
-            padding-top: 6px; margin-bottom: 12px;
+        .poster-tape {
+            position: absolute; width: 60px; height: 15px; background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(2px); z-index: 10;
+            mask-image: url("data:image/svg+xml,%3Csvg width='100' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L100 0 L100 20 L0 20 Z' fill='black'/%3E%3C/svg%3E");
         }
-        .publish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
-        .publish-grid-item { aspect-ratio: 1 / 1; background: #fff; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee; position: relative; }
+
+        .mood-input {
+            width: 90%; background: transparent; border: none; outline: none;
+            font-family: 'Patrick Hand', 'Caveat', cursive; font-size: 1.5rem; color: #4A3B32; text-align: center;
+            border-bottom: 1px dashed rgba(74, 59, 50, 0.3); padding-bottom: 5px; margin-top: 15px;
+        }
+        .mood-input::placeholder { color: rgba(74, 59, 50, 0.4); }
+
+        /* 私密画廊网格 */
+        .scrapbook-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; }
+        .scrapbook-item {
+            width: 100%; aspect-ratio: 9/16; background: #eee; border-radius: 8px; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08); position: relative; cursor: pointer;
+        }
+
+        /* --- 结算信封与收据样式 --- */
+        .envelope-stage { pointer-events: none; z-index: 60; }
+        .envelope-body {
+            width: 300px; height: 200px; background: var(--bg-kraft);
+            position: relative; border-radius: 5px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; border-bottom: 2px solid rgba(0,0,0,0.1);
+        }
+        .envelope-flap {
+            position: absolute; top: 0; left: 0; width: 0; height: 0;
+            border-left: 150px solid transparent; border-right: 150px solid transparent;
+            border-top: 120px solid #C1A378; transform-origin: top; z-index: 5;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .envelope-flap.closed { transform: rotateX(0deg); }
+        .envelope-flap.open { transform: rotateX(180deg); }
+        
+        .confetti { position: absolute; width: 8px; height: 8px; border-radius: 50%; animation: fall linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
+        
+        .summary-receipt {
+            background: #fff; width: 320px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(74, 59, 50, 0.1); position: relative; transform: rotate(-1deg);
+            background-image: repeating-linear-gradient(#fff, #fff 31px, #e5e5e5 31px, #e5e5e5 32px);
+        }
+        .summary-receipt::after {
+            content: ''; position: absolute; bottom: -15px; left: 0; width: 100%; height: 15px;
+            background: linear-gradient(-45deg, transparent 10px, #fff 10px), linear-gradient(45deg, transparent 10px, #fff 10px); background-size: 20px 20px;
+        }
 
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.4s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* 爱心点赞动画 */
-        .like-btn.liked { color: #e0245e; fill: #e0245e; animation: pop 0.3s ease-out; }
-        @keyframes pop { 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
 
         /* 图片放大灯箱效果 */
-        #photo-lightbox { backdrop-filter: blur(5px); transition: opacity 0.3s; }
+        #photo-lightbox { backdrop-filter: blur(8px); transition: opacity 0.3s; }
     </style>
 </head>
 <body>
@@ -149,75 +182,105 @@
                     <svg class="absolute inset-0 w-full h-full text-gray-200" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5,5" /></svg>
                     <svg class="absolute inset-0 w-full h-full text-[#B74141] transform -rotate-90" viewBox="0 0 100 100"><circle id="progress-circle" class="hand-drawn-ring" cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></svg>
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
-                        <span id="count-display" class="text-4xl font-hand font-bold text-[#5D4037]">0</span>
-                        <span class="text-xs opacity-50 font-serif">/ 100</span>
+                        <span id="count-display" class="text-4xl font-hand font-bold text-[#5D4037]">50</span>
+                        <span class="text-xs opacity-50 font-serif">/ 50 体力</span>
                     </div>
                 </div>
                 <div class="w-full mb-6">
                     <div class="mode-carousel">
-                        <div class="mode-ticket active" onclick="setMode('blitz', this)"><div class="text-2xl mb-1">⚡️</div><div class="font-bold text-xs">闪电战</div><div class="text-[9px] opacity-50 uppercase tracking-widest mt-1">Free</div></div>
-                        <div class="mode-ticket" onclick="setMode('screenshot', this)"><div class="text-2xl mb-1">📄</div><div class="font-bold text-xs">截图粉碎</div><div class="text-[9px] bg-[#688F4E] text-white px-1 rounded mt-1">半价</div></div>
-                        <div class="mode-ticket" onclick="setMode('timeline', this)"><div class="text-2xl mb-1">⏳</div><div class="font-bold text-xs">时光机</div><div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO</div></div>
+                        <div class="mode-ticket active" onclick="setMode('blitz', this)"><div class="text-2xl mb-1">⚡️</div><div class="font-bold text-xs">闪电战</div><div class="text-[9px] opacity-50 uppercase tracking-widest mt-1">-1 体力</div></div>
+                        <div class="mode-ticket" onclick="setMode('screenshot', this)"><div class="text-2xl mb-1">📄</div><div class="font-bold text-xs">截图粉碎</div><div class="text-[9px] bg-[#688F4E] text-white px-1 rounded mt-1">-0.5 体力</div></div>
+                        <div class="mode-ticket" onclick="setMode('timeline', this)"><div class="text-2xl mb-1">⏳</div><div class="font-bold text-xs">时光机</div><div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO 无限</div></div>
                     </div>
                 </div>
                 <div id="start-btn" class="w-[130px] h-[130px] bg-[#B74141] rounded-[50%] flex items-center justify-center text-white font-hand text-xl shadow-lg cursor-pointer transform transition active:scale-95 border-4 border-[#FDFBF7] z-30">开始<br>整理</div>
-                <div class="w-full text-center mt-4">
-                    <div class="washi-tape-bar"><div id="energy-bar" class="washi-tape-fill"></div></div>
-                    <span class="text-[10px] opacity-40 font-serif tracking-widest">今日体力</span>
-                </div>
             </div>
 
             <!-- 2. 滑卡界面 (Swiper) -->
             <div id="page-swiper" class="absolute inset-0 z-30 bg-transparent hidden flex-col items-center justify-center">
                 <div class="absolute top-12 left-0 w-full px-6 flex justify-between items-center z-40">
-                    <span onclick="goHome()" class="cursor-pointer text-sm font-serif opacity-60">← 返回</span>
-                    <span class="font-hand opacity-60" id="mode-title">闪电战模式</span>
+                    <span onclick="cancelSession()" class="cursor-pointer text-sm font-serif opacity-60 bg-white/50 px-2 rounded">← 退出</span>
+                    <!-- 高光槽位提示 (v4.0 新增) -->
+                    <span class="font-hand font-bold text-[#D4A373] bg-white/80 px-3 py-1 rounded-full shadow-sm" id="highlight-counter">⭐ 0/4</span>
                 </div>
-                <div id="card-stack" class="relative w-full h-full flex items-center justify-center"></div>
-                <div id="guide-text" class="absolute bottom-6 w-full flex justify-between px-12 font-hand text-lg opacity-40 pointer-events-none">
+                
+                <div id="card-stack" class="relative w-full h-full flex items-center justify-center z-20"></div>
+                
+                <div id="guide-text" class="absolute bottom-6 w-full flex justify-between px-10 font-hand text-lg opacity-40 pointer-events-none z-10">
                     <span class="text-[#B74141]" id="guide-left">← 丢弃</span>
-                    <span class="text-[#D4A373]">↑ 分享</span>
+                    <span class="text-[#D4A373] font-bold">↑ 装裱海报</span>
                     <span class="text-[#688F4E]">保留 →</span>
                 </div>
             </div>
 
-            <!-- 3. 发布手账页面 (Publish) -->
-            <div id="page-publish" class="absolute inset-0 z-50 bg-[#FDFBF7] hidden flex-col">
-                <div class="flex justify-between items-center px-4 pt-14 pb-4 border-b border-[#D2B48C]/30 bg-white">
-                    <span onclick="cancelPublish()" class="cursor-pointer text-sm font-serif opacity-60 px-2 py-1">取消</span>
-                    <span class="font-hand text-xl">记录新回忆</span>
-                    <button onclick="submitPublish()" class="bg-[#B74141] text-white px-4 py-1.5 rounded text-sm font-bold shadow-sm active:scale-95 transition">发布</button>
+            <!-- 3. 手账海报生成器 (The Maker - v4.0 核心) -->
+            <div id="page-maker" class="absolute inset-0 z-50 bg-[#2D2D2D] hidden flex-col items-center pt-14 pb-6 px-4">
+                <div class="w-full flex justify-between items-center mb-6 px-2">
+                    <span onclick="discardPoster()" class="text-white/60 cursor-pointer text-sm">丢弃</span>
+                    <span class="text-white font-hand text-xl tracking-widest">Scrapbook Maker</span>
+                    <span class="w-8"></span>
                 </div>
-                <div class="flex-1 overflow-y-auto p-4 flex flex-col items-start w-full">
-                    <textarea id="publish-caption" class="publish-textarea" placeholder="写下这一刻的心情..."></textarea>
-                    <div class="text-xs opacity-50 mb-2 font-serif" id="publish-count-hint">已选 1/9</div>
-                    <div id="publish-images-container" class="publish-grid"></div>
-                </div>
-            </div>
 
-            <!-- 4. 社区流 (Community Wall) -->
-            <div id="page-community" class="flex-1 hidden flex-col pt-12 fade-in relative z-20 overflow-y-auto bg-[#F9F7F2]">
-                <div class="px-6 pb-2 mb-2 sticky top-0 bg-[#F9F7F2]/90 backdrop-blur z-30 flex justify-between items-center">
-                    <div class="w-6"></div>
-                    <h1 class="text-2xl font-serif text-[#5D4037] text-center font-bold">回忆墙</h1>
-                    <div class="cursor-pointer opacity-80 text-[#B74141]" onclick="openPublishPage()">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <!-- 9:16 画布区 -->
+                <div id="poster-canvas" class="poster-canvas flex flex-col items-center py-6 px-4">
+                    <!-- 照片排版区 -->
+                    <div id="poster-photos" class="w-full flex-1 relative flex items-center justify-center">
+                        <!-- JS 动态注入排版 -->
+                    </div>
+                    
+                    <!-- 文案区 -->
+                    <div class="w-full flex flex-col items-center mt-4 z-20 relative">
+                        <input type="text" class="mood-input" placeholder="写下此刻的心情...">
+                        <div class="text-[10px] text-center opacity-60 font-serif leading-tight mt-4" id="poster-watermark">
+                            今日清理了 12 张废片，释放了 48MB 空间<br>但留下了最珍贵的这一刻。<br><span class="font-hand mt-1 block">—— CozyClean</span>
+                        </div>
                     </div>
                 </div>
-                <div id="feed-container" class="pb-6">
-                    <!-- 动态生成 -->
+
+                <!-- 底部操作区 -->
+                <div class="w-full mt-auto flex flex-col gap-3 px-6">
+                    <button onclick="savePoster(event)" class="w-full py-3.5 bg-[#D4A373] text-white rounded-xl font-bold font-serif shadow-lg active:scale-95 transition flex justify-center items-center gap-2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        存入私密手账
+                    </button>
+                    <div class="flex gap-3">
+                        <button onclick="document.getElementById('paywall').classList.remove('hidden')" class="flex-1 py-3 bg-white/10 text-white/80 rounded-xl text-sm font-bold flex justify-center items-center gap-1">
+                            <span>去水印</span><span class="bg-black text-[#F0E68C] text-[8px] px-1 rounded">PRO</span>
+                        </button>
+                        <button onclick="alert('调起系统原生分享面板 (Share Sheet)'); startSettlement();" class="flex-1 py-3 bg-white/10 text-white/80 rounded-xl text-sm font-bold">
+                            分享到...
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 新增 4.5: 个人动态页 (User Posts) -->
-            <div id="page-user-feed" class="flex-1 hidden flex-col pt-12 fade-in relative z-30 overflow-y-auto bg-[#F9F7F2]">
-                <div class="px-6 pb-2 mb-2 sticky top-0 bg-[#F9F7F2]/90 backdrop-blur z-30 flex justify-between items-center border-b border-black/5">
-                    <span onclick="closeUserFeed()" class="cursor-pointer text-sm font-serif opacity-60">← 返回</span>
-                    <h1 class="text-xl font-serif text-[#5D4037] text-center font-bold" id="user-feed-title">我的动态</h1>
-                    <div class="w-10"></div> <!-- 占位符保证标题居中 -->
+            <!-- 新增：结算与收据页面 -->
+            <div id="page-summary" class="absolute inset-0 z-[55] bg-[#FDFBF7] hidden flex-col items-center justify-center overflow-hidden">
+                <!-- 收据动态注入位置 -->
+            </div>
+
+            <div id="settlementStage" class="absolute inset-0 flex items-center justify-center hidden pointer-events-none z-[60]">
+                <div id="envelope" class="envelope-body transform translate-y-20 opacity-0 transition-all duration-700">
+                    <div id="envelopeFlap" class="envelope-flap open"></div>
+                    <span class="font-caveat text-white opacity-50 text-2xl z-10 mt-10" style="font-family: 'Caveat';">Archive</span>
                 </div>
-                <div id="user-feed-container" class="pb-6">
-                    <!-- 动态生成 -->
+            </div>
+
+            <!-- 4. 私密手账画廊 (Tab: Scrapbook) -->
+            <div id="page-scrapbook" class="flex-1 hidden flex-col pt-12 fade-in relative z-20 overflow-y-auto bg-[#F9F7F2]">
+                <div class="px-6 pb-2 mb-2 sticky top-0 bg-[#F9F7F2]/90 backdrop-blur z-30">
+                    <h1 class="text-2xl font-serif text-[#5D4037] font-bold">我的手账本</h1>
+                    <p class="text-xs opacity-50 mt-1">仅您自己可见。已收集 1 张海报。</p>
+                </div>
+                <!-- 瀑布流/网格 -->
+                <div class="scrapbook-grid" id="scrapbook-gallery">
+                    <!-- 默认预置一张海报 -->
+                    <div class="scrapbook-item" onclick="openLightbox('https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=400')">
+                        <img src="https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=400" class="w-full h-full object-cover opacity-90">
+                        <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
+                            <div class="text-white text-[10px] font-hand">Mar 24, 2026</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -238,19 +301,23 @@
                     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center"><div class="text-xs opacity-50 font-serif">连续打卡</div><div class="text-2xl font-bold font-hand text-[#B74141]">12 天</div></div>
                 </div>
                 <div class="space-y-4">
-                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer" onclick="openUserFeed('林小舒', 'profile')"><span>我的动态</span><span class="opacity-40">→</span></div>
-                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>历史日志</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer" onclick="switchTab('scrapbook')"><span>我的手账画廊</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>历史清理日志</span><span class="opacity-40">→</span></div>
                     <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer" onclick="document.getElementById('paywall').classList.remove('hidden')"><span>会员中心</span><span class="opacity-40">→</span></div>
-                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>设置</span><span class="opacity-40">→</span></div>
-                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>关于</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>偏好设置</span><span class="opacity-40">→</span></div>
                 </div>
             </div>
 
             <!-- 付费弹窗 -->
-            <div id="paywall" class="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-6">
+            <div id="paywall" class="absolute inset-0 z-[200] bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-6">
                 <div class="bg-[#FFFBF0] w-full max-w-sm p-6 rounded-2xl shadow-2xl relative text-center">
-                    <div class="text-4xl mb-2">👑</div><h3 class="text-xl font-bold font-serif mb-2">升级会员</h3>
-                    <p class="text-sm opacity-70 font-hand mb-6">解锁所有模式与无限体力。</p>
+                    <div class="text-4xl mb-2">👑</div><h3 class="text-xl font-bold font-serif mb-2">升级 Pro 会员</h3>
+                    <ul class="text-sm opacity-70 font-serif mb-6 text-left space-y-2 inline-block">
+                        <li>✨ 解锁「时光穿梭机」模式</li>
+                        <li>✨ 无限清理体力</li>
+                        <li>✨ 手账海报去除水印</li>
+                        <li>✨ 解锁高级排版模板</li>
+                    </ul>
                     <button onclick="unlockPro()" class="w-full py-3 bg-[#5D4037] text-white rounded-xl font-bold shadow-lg mb-3">立即解锁</button>
                     <button onclick="document.getElementById('paywall').classList.add('hidden')" class="text-xs opacity-50 underline">以后再说</button>
                 </div>
@@ -261,7 +328,11 @@
                 <div class="absolute top-14 right-6 text-white opacity-70 p-2 cursor-pointer" onclick="closeLightbox()">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </div>
-                <img id="lightbox-img" src="" class="w-full max-h-[70vh] object-contain">
+                <!-- 模拟生成的长图海报放大效果 -->
+                <div id="lightbox-content" class="w-[85%] max-h-[80vh] bg-[#EFE9D9] rounded-lg shadow-2xl overflow-hidden relative">
+                     <img id="lightbox-img" src="" class="w-full h-full object-cover">
+                     <div class="absolute bottom-4 w-full text-center font-hand text-white text-sm drop-shadow-md">CozyClean</div>
+                </div>
             </div>
 
         </div> 
@@ -270,11 +341,12 @@
         <nav class="absolute bottom-0 w-full h-[80px] bg-[#F9F7F2] border-t border-black/5 flex justify-around items-center pb-5 z-40">
             <div id="tab-home" class="opacity-100 text-[#B74141] flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('home')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-                <span class="text-[10px] font-serif mt-1">整理</span>
+                <span class="text-[10px] font-serif mt-1">清理</span>
             </div>
-            <div id="tab-community" class="opacity-40 flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('community')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                <span class="text-[10px] font-serif mt-1">社区</span>
+            <!-- Tab B 改为手账 Scrapbook -->
+            <div id="tab-scrapbook" class="opacity-40 flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('scrapbook')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"></rect><rect x="9" y="9" width="6" height="6"></rect><line x1="9" y1="1" x2="9" y2="4"></line><line x1="15" y1="1" x2="15" y2="4"></line><line x1="9" y1="20" x2="9" y2="23"></line><line x1="15" y1="20" x2="15" y2="23"></line><line x1="20" y1="9" x2="23" y2="9"></line><line x1="20" y1="14" x2="23" y2="14"></line><line x1="1" y1="9" x2="4" y2="9"></line><line x1="1" y1="14" x2="4" y2="14"></line></svg>
+                <span class="text-[10px] font-serif mt-1">手账</span>
             </div>
             <div id="tab-me" class="opacity-40 flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('profile')">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
@@ -284,50 +356,26 @@
     </div>
 
     <script>
-        const state = { count: 0, limit: 100, isPro: false, mode: 'blitz', pendingShareImgs: [], publishSource: '', userFeedSource: 'community' };
+        const state = { 
+            energy: 50, 
+            deletedInSession: 0,
+            isPro: false, 
+            mode: 'blitz', 
+            highlightImgs: [] // 最大长度 4
+        };
 
         const photos = [
             { src: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&q=80', date: '宝宝的第一步', type: 'photo' },
             { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80', date: '晴朗的周日', type: 'photo' },
+            { src: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=400&q=80', date: '大笑的脸庞', type: 'photo' },
             { src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80', date: '2023-10-12 14:30', info: 'WeChat_2023...jpg', size: '2.4MB', type: 'screenshot' }
         ];
 
-        const mockGallery = [
-            'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=400&q=80',
-            'https://images.unsplash.com/photo-1505935428862-770b6f24f629?w=400&q=80',
-            'https://images.unsplash.com/photo-1536640712-4d4c36ef0e2c?w=400&q=80',
-            'https://images.unsplash.com/photo-1555252117-426bfb772091?w=400&q=80'
-        ];
-
-        // 全局社区数据
-        let feedData = [
-            { 
-                user: '林小舒', avatar: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=100', 
-                imgs: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400&q=80'], 
-                caption: '第一次记录，清爽的开始！', likes: 15, isLiked: false 
-            },
-            { 
-                user: 'Summer', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100', 
-                imgs: [
-                    'https://images.unsplash.com/photo-1505935428862-770b6f24f629?w=400&q=80',
-                    'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400&q=80',
-                    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80',
-                    'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=400&q=80'
-                ], 
-                caption: '去公园撒野的碎片记录，太废妈了！', likes: 24, isLiked: false 
-            },
-            { 
-                user: '小石头爸爸', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100', 
-                imgs: ['https://images.unsplash.com/photo-1536640712-4d4c36ef0e2c?w=400&q=80'], 
-                caption: '睡觉的样子最可爱。', likes: 12, isLiked: false 
-            }
-        ];
-
         function switchTab(tab) {
-            ['page-home', 'page-community', 'page-profile', 'page-swiper', 'page-publish', 'page-user-feed'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            ['page-home', 'page-scrapbook', 'page-profile', 'page-swiper', 'page-maker', 'page-summary'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById(`page-${tab}`).classList.remove('hidden');
             
-            ['home', 'community', 'me'].forEach(t => {
+            ['home', 'scrapbook', 'me'].forEach(t => {
                 const el = document.getElementById(`tab-${t === 'profile' ? 'me' : t}`);
                 if(t === tab || (tab==='profile' && t==='me')) {
                     el.classList.replace('opacity-40', 'opacity-100');
@@ -337,8 +385,6 @@
                     el.classList.remove('text-[#B74141]');
                 }
             });
-
-            if (tab === 'community') renderFeed();
         }
 
         function setMode(mode, el) {
@@ -353,23 +399,37 @@
             document.getElementById('paywall').classList.add('hidden');
             document.getElementById('badge-free').classList.add('hidden');
             document.getElementById('badge-pro').classList.remove('hidden');
-            alert("✨ 会员已解锁！");
+            // 解锁水印
+            document.getElementById('poster-watermark').innerHTML = `<span class="font-hand opacity-50">记录最珍贵的一刻。</span>`;
+            alert("✨ 会员已解锁！海报水印已去除。");
         }
 
         document.getElementById('start-btn').addEventListener('click', () => {
+            if (state.energy <= 0) { alert("今日体力已耗尽！"); return; }
             document.getElementById('page-home').classList.add('hidden');
             document.getElementById('page-swiper').classList.remove('hidden');
             document.querySelector('nav').classList.add('hidden');
+            
+            state.highlightImgs = [];
+            state.deletedInSession = 0;
+            document.getElementById('highlight-counter').innerText = `⭐ 0/4`;
+            
             initCards();
         });
 
         function goHome() {
-            document.getElementById('page-swiper').classList.add('hidden');
+            ['page-swiper', 'page-summary', 'page-maker'].forEach(id => document.getElementById(id).classList.add('hidden'));
             document.getElementById('page-home').classList.remove('hidden');
             document.querySelector('nav').classList.remove('hidden');
-            document.getElementById('count-display').innerText = state.count;
-            document.getElementById('progress-circle').style.strokeDashoffset = 283 - (state.count / 100) * 283;
-            document.getElementById('energy-bar').style.width = Math.max(0, 100 - state.count) + '%';
+            document.getElementById('count-display').innerText = state.energy;
+            // 简单的倒序进度条模拟
+            document.getElementById('progress-circle').style.strokeDashoffset = 283 - ((50-state.energy) / 50) * 283;
+        }
+
+        function cancelSession() {
+            if(confirm("确定要退出本次清理吗？进度将不会保存。")) {
+                goHome();
+            }
         }
 
         function initCards() {
@@ -389,9 +449,6 @@
                 if (isScreenshot) {
                     card.innerHTML = `
                         <div class="flex-1 w-full overflow-hidden p-4"><img src="${p.src}" class="w-full h-full object-contain pointer-events-none border border-gray-200"></div>
-                        <div class="px-5 pb-5 w-full text-xs font-mono text-gray-500 flex flex-col gap-1">
-                            <div class="border-t border-dashed border-gray-300 pt-2 flex justify-between"><span>NAME:</span><span>${p.info}</span></div>
-                        </div>
                         <div class="stamp-mark top-24 right-8 opacity-0 stamp-del stamp-shred-style">SHREDDED</div>
                         <div class="stamp-mark bottom-20 left-8 transform rotate-12 border-4 border-[#688F4E] text-[#688F4E] p-2 rounded-full font-hand font-bold text-xl opacity-0 stamp-keep">KEEP</div>
                     `;
@@ -401,7 +458,10 @@
                         <div class="py-4 font-hand text-xl opacity-70">${p.date}</div>
                         <div class="stamp-mark top-12 right-8 transform -rotate-12 border-4 border-[#B74141] text-[#B74141] p-2 rounded font-hand font-bold text-xl opacity-0 stamp-del">DISCARD</div>
                         <div class="stamp-mark bottom-20 left-8 transform rotate-12 border-4 border-[#688F4E] text-[#688F4E] p-2 rounded-full font-hand font-bold text-xl opacity-0 stamp-keep">KEEP</div>
-                        <div class="stamp-mark top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-[#D4A373] text-[#D4A373] p-3 rounded font-hand font-bold text-3xl opacity-0 stamp-share bg-white/80">SHARE</div>
+                        <!-- v4.0 高光装裱印章 -->
+                        <div class="stamp-mark top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-[#D4A373] opacity-0 stamp-hl drop-shadow-lg">
+                            <svg width="80" height="80" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </div>
                     `;
                 }
                 container.appendChild(card);
@@ -416,13 +476,10 @@
 
             const sDel = card.querySelector('.stamp-del');
             const sKeep = card.querySelector('.stamp-keep');
-            const sShare = card.querySelector('.stamp-share'); 
+            const sHl = card.querySelector('.stamp-hl'); // Highlight star
 
             const start = (e) => { 
-                isDragging = true; 
-                startX = e.clientX || e.touches[0].clientX; 
-                startY = e.clientY || e.touches[0].clientY; 
-                card.style.transition = 'none'; 
+                isDragging = true; startX = e.clientX || e.touches[0].clientX; startY = e.clientY || e.touches[0].clientY; card.style.transition = 'none'; 
             };
             
             const move = (e) => {
@@ -432,14 +489,15 @@
                 
                 const isVertical = Math.abs(currentY) > Math.abs(currentX) * 0.5 && currentY < 0;
 
-                if (isVertical && sShare) {
+                if (isVertical && sHl) {
                     card.style.transform = `translate(calc(-50% + ${currentX*0.2}px), calc(-50% + ${currentY}px)) rotate(0deg)`;
-                    sShare.style.opacity = Math.min(Math.abs(currentY)/100, 1);
+                    sHl.style.opacity = Math.min(Math.abs(currentY)/100, 1);
+                    sHl.style.transform = `translate(-50%, -50%) scale(${0.5 + Math.min(Math.abs(currentY)/100, 1)})`;
                     if(sDel) sDel.style.opacity = 0; if(sKeep) sKeep.style.opacity = 0;
                 } else {
                     const rot = state.mode === 'screenshot' ? 0 : currentX * 0.1;
                     card.style.transform = `translate(calc(-50% + ${currentX}px), -50%) rotate(${rot}deg)`;
-                    if(sShare) sShare.style.opacity = 0;
+                    if(sHl) sHl.style.opacity = 0;
                     if(currentX < 0) {
                         if(sDel) sDel.style.opacity = Math.min(-currentX/thresholdX, 1);
                         if(sKeep) sKeep.style.opacity = 0;
@@ -454,30 +512,36 @@
                 if(!isDragging) return; isDragging = false;
                 const isVertical = Math.abs(currentY) > Math.abs(currentX) * 0.5 && currentY < 0;
 
-                if (isVertical && currentY < thresholdY && sShare) {
-                    card.style.transition = 'transform 0.4s ease-out';
-                    card.style.transform = `translate(-50%, -800px) rotate(0deg)`;
-                    setTimeout(() => {
-                        openPublishPage(card.dataset.src);
-                        card.remove();
-                        const next = document.getElementById('card-stack').firstElementChild;
-                        if(next) setupSwipe(next); else goHome();
-                    }, 300);
+                if (isVertical && currentY < thresholdY && sHl) {
+                    // v4.0 上滑：加入高光素材库 (限4张)
+                    if (state.highlightImgs.length >= 4) {
+                        alert("每局最多只能装裱 4 张高光照片哦！");
+                        card.style.transition = 'transform 0.3s ease';
+                        card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
+                        sHl.style.opacity = 0;
+                        return;
+                    }
+
+                    state.highlightImgs.push(card.dataset.src);
+                    document.getElementById('highlight-counter').innerText = `⭐ ${state.highlightImgs.length}/4`;
+                    
+                    card.style.transition = 'all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    // 飞向右上角缩小
+                    card.style.transform = `translate(100px, -400px) scale(0.2) rotate(15deg)`;
+                    card.style.opacity = '0';
+                    
+                    setTimeout(() => processNextCard(card), 400);
                 }
                 else if(!isVertical && Math.abs(currentX) > thresholdX) {
                     const isDel = currentX < 0;
                     card.style.transition = 'transform 0.4s ease-out';
                     card.style.transform = `translate(calc(-50% + ${isDel ? -500 : 500}px), -50%) rotate(${isDel ? -45 : 45}deg)`;
-                    if(isDel) state.count++;
-                    setTimeout(() => {
-                        card.remove();
-                        const next = document.getElementById('card-stack').firstElementChild;
-                        if(next) setupSwipe(next); else goHome();
-                    }, 300);
+                    if(isDel) state.deletedInSession++;
+                    setTimeout(() => processNextCard(card), 300);
                 } else {
                     card.style.transition = 'transform 0.3s ease';
                     card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-                    if(sDel) sDel.style.opacity = 0; if(sKeep) sKeep.style.opacity = 0; if(sShare) sShare.style.opacity = 0;
+                    if(sDel) sDel.style.opacity = 0; if(sKeep) sKeep.style.opacity = 0; if(sHl) sHl.style.opacity = 0;
                 }
             };
 
@@ -485,177 +549,184 @@
             card.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
         }
 
-        function openPublishPage(src) {
-            state.publishSource = src ? 'swiper' : 'community'; 
-            state.pendingShareImgs = src ? [src] : []; 
-            document.getElementById('publish-caption').value = '';
-            
-            ['page-home', 'page-community', 'page-profile', 'page-swiper', 'page-user-feed'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('page-publish').classList.remove('hidden');
+        function processNextCard(card) {
+            state.energy = Math.max(0, state.energy - (state.mode === 'screenshot' ? 0.5 : 1));
+            card.remove();
+            const next = document.getElementById('card-stack').firstElementChild;
+            if(next) {
+                setupSwipe(next);
+            } else {
+                // 如果有高光照片，进入海报生成器；否则直接进入结算仪式
+                if (state.highlightImgs.length > 0) {
+                    openPosterMaker();
+                } else {
+                    startSettlement();
+                }
+            }
+        }
+
+        // --- 结算动画与收据逻辑 ---
+        function startSettlement() {
+            // 隐藏其它页面，显示结算收据容器
+            ['page-home', 'page-scrapbook', 'page-profile', 'page-swiper', 'page-maker'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('page-summary').classList.remove('hidden');
+            document.getElementById('page-summary').innerHTML = ''; // 清空上次记录
             document.querySelector('nav').classList.add('hidden');
-            renderPublishGrid();
+
+            const stage = document.getElementById('settlementStage');
+            const envelope = document.getElementById('envelope');
+            stage.classList.remove('hidden');
+            
+            // 重置信封状态
+            envelope.classList.add('opacity-0', 'translate-y-20');
+            document.getElementById('envelopeFlap').classList.remove('closed');
+            document.getElementById('envelopeFlap').classList.add('open');
+
+            // 信封进入
+            setTimeout(() => {
+                envelope.classList.remove('opacity-0', 'translate-y-20');
+            }, 100);
+
+            // 延迟后盖上信封，展示收据
+            setTimeout(() => {
+                document.getElementById('envelopeFlap').classList.remove('open');
+                document.getElementById('envelopeFlap').classList.add('closed');
+                setTimeout(() => showSummary(), 1000);
+            }, 1200);
         }
 
-        function renderPublishGrid() {
-            const container = document.getElementById('publish-images-container');
-            const counter = document.getElementById('publish-count-hint');
-            container.innerHTML = '';
-            counter.innerText = `已选 ${state.pendingShareImgs.length}/9`;
-
-            state.pendingShareImgs.forEach((src) => {
-                container.innerHTML += `<div class="publish-grid-item rounded"><img src="${src}" class="w-full h-full object-cover rounded-sm"></div>`;
-            });
-
-            if (state.pendingShareImgs.length < 9) {
-                container.innerHTML += `
-                    <div class="publish-grid-item rounded flex items-center justify-center bg-gray-50 border-dashed border-gray-300 cursor-pointer" onclick="mockAddPublishPhoto()">
-                        <span class="text-3xl text-gray-300">+</span>
-                    </div>`;
-            }
-        }
-
-        function mockAddPublishPhoto() {
-            if (state.pendingShareImgs.length >= 9) return;
-            const randomImg = mockGallery[Math.floor(Math.random() * mockGallery.length)];
-            state.pendingShareImgs.push(randomImg);
-            renderPublishGrid();
-        }
-
-        function cancelPublish() {
-            document.getElementById('page-publish').classList.add('hidden');
-            if (state.publishSource === 'community') {
-                document.getElementById('page-community').classList.remove('hidden');
-                document.querySelector('nav').classList.remove('hidden');
-            } else {
-                document.getElementById('page-swiper').classList.remove('hidden');
-            }
-        }
-
-        function submitPublish() {
-            if (state.pendingShareImgs.length === 0) { alert('请至少添加一张图片'); return; }
-            const caption = document.getElementById('publish-caption').value || '记录今天的美好！';
-            feedData.unshift({
-                user: '林小舒', avatar: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=100',
-                imgs: [...state.pendingShareImgs], caption: caption, likes: 0, isLiked: false
-            });
-            document.getElementById('page-publish').classList.add('hidden');
-            document.querySelector('nav').classList.remove('hidden');
-            switchTab('community');
-        }
-
-        // --- 核心：渲染单个动态卡片 HTML ---
-        function createPostHTML(post, index) {
-            let gridCols = 1;
-            if (post.imgs.length === 2 || post.imgs.length === 4) gridCols = 2;
-            else if (post.imgs.length >= 3) gridCols = 3;
-
-            let imagesHTML = `<div class="grid-photo-container mb-3" style="grid-template-columns: repeat(${gridCols}, 1fr);">`;
-            post.imgs.forEach(img => {
-                const imgClass = post.imgs.length === 1 ? 'w-full h-auto object-cover max-h-[400px] cursor-pointer rounded' : 'grid-photo-item';
-                imagesHTML += `<img src="${img}" class="${imgClass}" onclick="openLightbox('${img}')">`;
-            });
-            imagesHTML += `</div>`;
-
-            return `
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2 cursor-pointer transition active:scale-95" onclick="openUserFeed('${post.user}', 'community')">
-                        <img src="${post.avatar}" class="feed-avatar">
-                        <span class="font-bold font-serif text-sm">${post.user}</span>
-                    </div>
-                    <div class="opacity-50 cursor-pointer p-2" onclick="alert('举报已提交，管理员将尽快核实。')">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                    </div>
+        function showSummary() {
+            document.getElementById('settlementStage').classList.add('hidden');
+            createConfetti();
+            
+            const mbSaved = (state.deletedInSession * 3.5).toFixed(1);
+            
+            const div = document.createElement('div');
+            div.className = 'flex flex-col items-center animate-fade-in z-50';
+            div.innerHTML = `
+                <div class="summary-receipt mb-8">
+                    <h2 class="text-2xl mb-6 border-b border-dashed border-gray-300 pb-2 font-serif font-bold text-[#5D4037]">整理小结</h2>
+                    <div class="flex justify-between py-2 text-xl font-hand text-[#5D4037]"><span>已丢弃废片</span><span>${state.deletedInSession} 张</span></div>
+                    <div class="flex justify-between py-2 text-xl font-hand text-[#5D4037]"><span>释放空间</span><span>${mbSaved} MB</span></div>
+                    <div class="flex justify-between py-2 text-xl font-hand text-[#5D4037]"><span>高光装裱</span><span>${state.highlightImgs.length} 张</span></div>
+                    <p class="mt-6 text-center text-sm opacity-40 italic font-serif">- 谢谢你，今天也很努力 -</p>
                 </div>
-                ${imagesHTML}
-                <div class="flex gap-4 mb-2">
-                    <svg class="like-btn cursor-pointer w-6 h-6 ${post.isLiked ? 'liked' : ''}" onclick="toggleLike(this, ${index})" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                    <svg class="cursor-pointer w-6 h-6 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                </div>
-                <div class="text-sm font-bold mb-1"><span class="like-count">${post.likes}</span> 次赞</div>
-                <div class="text-sm font-hand text-lg mt-1 leading-snug"><span class="font-serif font-bold text-sm mr-2">${post.user}</span>${post.caption}</div>
+                <button onclick="finishSession()" class="px-10 py-3 rounded-full text-white text-xl shadow-lg bg-[#A84A4A] font-hand active:scale-95 transition">完成</button>
             `;
+            document.getElementById('page-summary').appendChild(div);
         }
 
-        // --- 社区页面逻辑 ---
-        function renderFeed() {
-            const container = document.getElementById('feed-container');
+        function createConfetti() {
+            const colors = ['#A84A4A', '#688F4E', '#D4A373'];
+            const container = document.getElementById('page-summary');
+            for(let i=0; i<30; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti z-40';
+                c.style.background = colors[Math.floor(Math.random()*colors.length)];
+                c.style.left = Math.random()*100 + '%';
+                c.style.animationDuration = (Math.random()*2 + 2) + 's';
+                container.appendChild(c);
+            }
+        }
+
+        function finishSession() {
+            document.querySelectorAll('.confetti').forEach(e => e.remove());
+            goHome(); // 重置并回到首页
+        }
+
+        // --- v4.0 手账海报生成器逻辑 ---
+        function openPosterMaker() {
+            document.getElementById('page-swiper').classList.add('hidden');
+            document.getElementById('page-maker').classList.remove('hidden');
+            
+            if(!state.isPro) {
+                const mbSaved = (state.deletedInSession * 3.5).toFixed(1);
+                document.getElementById('poster-watermark').innerHTML = `今日清理了 ${state.deletedInSession} 张废片，释放了 ${mbSaved}MB 空间<br>但留下了最珍贵的这一刻。<br><span class="font-hand mt-1 block">—— CozyClean</span>`;
+            }
+
+            renderPosterCanvas();
+        }
+
+        function renderPosterCanvas() {
+            const container = document.getElementById('poster-photos');
             container.innerHTML = '';
-            feedData.forEach((post, globalIndex) => {
-                const el = document.createElement('div');
-                el.className = 'feed-post';
-                el.innerHTML = createPostHTML(post, globalIndex);
-                container.appendChild(el);
-            });
-        }
+            const imgs = state.highlightImgs;
+            const count = imgs.length;
 
-        // --- 个人动态页逻辑 ---
-        function openUserFeed(username, source = 'community') {
-            state.userFeedSource = source; // 记录来源
-            
-            ['page-home', 'page-community', 'page-profile', 'page-swiper', 'page-publish'].forEach(id => document.getElementById(id).classList.add('hidden'));
-            document.getElementById('page-user-feed').classList.remove('hidden');
-            
-            // 动态修改标题
-            document.getElementById('user-feed-title').innerText = username === '林小舒' ? '我的动态' : `${username} 的动态`;
-            
-            const container = document.getElementById('user-feed-container');
-            container.innerHTML = '';
-            
-            const userPosts = feedData.map((post, index) => ({post, index})).filter(item => item.post.user === username);
-            
-            if (userPosts.length === 0) {
-                container.innerHTML = '<div class="text-center opacity-40 mt-20 font-hand text-lg">暂无动态记录</div>';
-                return;
-            }
-
-            userPosts.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'feed-post';
-                el.innerHTML = createPostHTML(item.post, item.index);
-                container.appendChild(el);
-            });
-        }
-
-        function closeUserFeed() {
-            document.getElementById('page-user-feed').classList.add('hidden');
-            if (state.userFeedSource === 'profile') {
-                document.getElementById('page-profile').classList.remove('hidden');
+            if (count === 1) {
+                container.innerHTML = `
+                    <div class="w-[85%] bg-white p-3 pb-10 shadow-md transform -rotate-2 relative">
+                        <div class="poster-tape -top-2 left-1/2 transform -translate-x-1/2 rotate-3"></div>
+                        <img src="${imgs[0]}" class="w-full aspect-[4/5] object-cover border border-gray-100">
+                    </div>`;
+            } else if (count === 2) {
+                container.innerHTML = `
+                    <div class="w-[70%] bg-white p-2 pb-6 shadow-md transform -rotate-6 absolute top-[10%] left-[10%] z-10">
+                        <div class="poster-tape -top-2 right-2 transform rotate-12"></div>
+                        <img src="${imgs[0]}" class="w-full aspect-square object-cover">
+                    </div>
+                    <div class="w-[70%] bg-white p-2 pb-6 shadow-md transform rotate-4 absolute bottom-[20%] right-[10%] z-20">
+                        <img src="${imgs[1]}" class="w-full aspect-square object-cover">
+                    </div>`;
             } else {
-                document.getElementById('page-community').classList.remove('hidden');
-                renderFeed(); // 重新渲染社区以同步可能发生的点赞状态
+                let gridHTML = `<div class="grid grid-cols-2 gap-3 p-4 w-full relative z-10"><div class="poster-tape -top-2 left-4 transform rotate-2"></div>`;
+                imgs.forEach((src, idx) => {
+                    const rot = (idx % 2 === 0) ? -2 : 3;
+                    gridHTML += `<div class="bg-white p-1 pb-4 shadow-sm transform rotate-[${rot}deg]"><img src="${src}" class="w-full aspect-square object-cover"></div>`;
+                });
+                gridHTML += `</div>`;
+                container.innerHTML = gridHTML;
             }
         }
 
-        // --- 点赞与灯箱逻辑 ---
-        function toggleLike(el, globalIndex) {
-            const post = feedData[globalIndex];
-            post.isLiked = !post.isLiked;
-            if(post.isLiked) {
-                post.likes++;
-                el.classList.add('liked');
-            } else {
-                post.likes--;
-                el.classList.remove('liked');
+        function discardPoster() {
+            if(confirm("确定丢弃这张海报吗？不会保存到手账。")) {
+                startSettlement(); // 丢弃后依然正常结算
             }
-            // 局部更新文字节点
-            el.parentElement.nextElementSibling.innerHTML = `<span class="like-count">${post.likes}</span> 次赞`;
         }
 
+        function savePoster(event) {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<span class="animate-pulse">生成中...</span>`;
+            
+            setTimeout(() => {
+                // 保存海报封面至画廊
+                const cover = state.highlightImgs[0];
+                const gallery = document.getElementById('scrapbook-gallery');
+                const newEl = document.createElement('div');
+                newEl.className = 'scrapbook-item fade-in';
+                newEl.innerHTML = `
+                    <img src="${cover}" class="w-full h-full object-cover opacity-90" onclick="openLightbox('${cover}')">
+                    <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black/60 to-transparent p-2">
+                        <div class="text-white text-[10px] font-hand">Just Now</div>
+                    </div>
+                `;
+                gallery.insertBefore(newEl, gallery.firstChild); 
+                
+                btn.innerHTML = originalHTML; // 重置按钮状态
+                startSettlement(); // 保存成功后，正常进入信封结算仪式
+            }, 1000);
+        }
+
+        // --- 图片灯箱逻辑 ---
         function openLightbox(src) {
             const lightbox = document.getElementById('photo-lightbox');
             const img = document.getElementById('lightbox-img');
             img.src = src;
             lightbox.classList.remove('hidden');
             lightbox.classList.add('flex');
-            img.style.transform = 'scale(0.9)';
-            setTimeout(() => { img.style.transform = 'scale(1)'; img.style.transition = 'transform 0.2s ease-out'; }, 10);
+            
+            const content = document.getElementById('lightbox-content');
+            content.style.transform = 'scale(0.9)';
+            setTimeout(() => { content.style.transform = 'scale(1)'; content.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; }, 10);
         }
 
         function closeLightbox() {
             const lightbox = document.getElementById('photo-lightbox');
             lightbox.classList.add('hidden');
             lightbox.classList.remove('flex');
-            document.getElementById('lightbox-img').style.transition = 'none';
+            document.getElementById('lightbox-content').style.transition = 'none';
         }
 
     </script>
