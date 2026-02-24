@@ -1,300 +1,133 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CozyClean v2.3 - 个人中心优化版</title>
+    <title>CozyClean v3.3 - 个人主页原型</title>
     <!-- 引入高质感字体 -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@400;700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Patrick+Hand&family=Lora:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@400;700&family=Courier+Prime&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- 视觉系统 v2.3 --- */
+        /* --- 视觉系统 --- */
         :root {
             --bg-desk: #E0E0E0;
             --bg-paper: #FDFBF7;
-            --bg-kraft: #E6D2B5;
+            --bg-office: #F0F2F5;
             --text-primary: #5D4037;
-            --text-secondary: #8D6E63;
             --accent-red: #B74141;
             --accent-green: #688F4E;
+            --accent-gold: #D4A373;
             --accent-tape: #F0E68C;
             --nav-bg: #F9F7F2;
         }
 
         body {
             background-color: var(--bg-desk);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; margin: 0;
             font-family: 'Lora', 'Noto Serif SC', serif;
             background-image: radial-gradient(#ccc 1px, transparent 1px);
             background-size: 20px 20px;
         }
 
-        /* --- 手机外壳仿真 --- */
+        /* 手机外壳 */
         .mobile-frame {
-            width: 390px;
-            height: 844px;
-            /* iPhone 14 尺寸 */
-            background-color: var(--bg-paper);
-            border-radius: 50px;
-            box-shadow:
-                0 0 0 12px #333,
-                0 20px 50px rgba(0, 0, 0, 0.3),
-                inset 0 0 20px rgba(0, 0, 0, 0.05);
-            position: relative;
-            overflow: hidden;
+            width: 390px; height: 844px;
+            background-color: var(--bg-paper); border-radius: 50px;
+            box-shadow: 0 0 0 12px #333, 0 20px 50px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.05);
+            position: relative; overflow: hidden; transition: background-color 0.5s;
             color: var(--text-primary);
         }
+        .mobile-frame.mode-office { background-color: var(--bg-office); }
 
         .notch {
-            position: absolute;
-            top: 12px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 35px;
-            background: #000;
-            border-radius: 20px;
-            z-index: 999;
-            pointer-events: none;
+            position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+            width: 120px; height: 35px; background: #000; border-radius: 20px; z-index: 999; pointer-events: none;
         }
 
         .texture-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 50;
-            opacity: 0.6;
+            position: absolute; inset: 0; pointer-events: none; z-index: 50; opacity: 0.6;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
         }
 
-        /* --- UI 组件样式 --- */
-
-        .hand-drawn-ring {
-            stroke-dasharray: 283;
-            stroke-dashoffset: 283;
-            transition: stroke-dashoffset 1s ease-out;
-            filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.1));
-        }
-
+        /* 组件样式 */
+        .hand-drawn-ring { stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 1s ease-out; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.1)); }
+        
         .washi-tape-bar {
-            width: 80%;
-            height: 12px;
-            background: rgba(0, 0, 0, 0.05);
-            position: relative;
-            margin: 10px auto;
+            width: 80%; height: 12px; background: rgba(0,0,0,0.05); position: relative; margin: 10px auto;
             mask-image: url("data:image/svg+xml,%3Csvg width='200' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0 L200 0 L200 20 L0 20 Z' fill='black'/%3E%3C/svg%3E");
         }
-
         .washi-tape-fill {
-            height: 100%;
-            background: var(--accent-tape);
-            width: 100%;
-            opacity: 0.8;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, 0.5) 5px, rgba(255, 255, 255, 0.5) 10px);
+            height: 100%; background: var(--accent-tape); width: 100%; opacity: 0.8;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.5) 5px, rgba(255,255,255,0.5) 10px);
             transition: width 0.5s;
         }
 
-        /* 模式票据 */
-        .mode-carousel {
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding: 10px 25px;
-            scrollbar-width: none;
-        }
-
-        .mode-carousel::-webkit-scrollbar {
-            display: none;
-        }
-
+        .mode-carousel { display: flex; gap: 15px; overflow-x: auto; padding: 10px 25px; scrollbar-width: none; }
+        .mode-carousel::-webkit-scrollbar { display: none; }
         .mode-ticket {
-            flex: 0 0 100px;
-            height: 130px;
-            background: #fff;
-            border: 1px dashed #d1c4b0;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            transition: all 0.2s;
-            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.05);
+            flex: 0 0 100px; height: 130px; background: #fff; border: 1px dashed #d1c4b0; border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;
+            transition: all 0.2s; box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
         }
-
-        .mode-ticket::before,
-        .mode-ticket::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 12px;
-            height: 12px;
-            background: var(--bg-paper);
-            border-radius: 50%;
-        }
-
-        .mode-ticket::before {
-            left: -6px;
-        }
-
-        .mode-ticket::after {
-            right: -6px;
-        }
-
-        .mode-ticket.active {
-            background: #FFFDF5;
-            border: 1px solid var(--accent-red);
-            transform: translateY(-5px) rotate(-1deg);
-            box-shadow: 0 8px 15px rgba(183, 65, 65, 0.15);
-        }
-
-        /* 火漆按钮 */
-        .wax-seal {
-            width: 130px;
-            height: 130px;
-            background: radial-gradient(circle at 30% 30%, #D65A5A, #B74141, #8E3232);
-            border-radius: 52% 48% 55% 45% / 45% 55% 45% 55%;
-            box-shadow:
-                inset 5px 5px 15px rgba(255, 255, 255, 0.2),
-                inset -5px -5px 10px rgba(0, 0, 0, 0.3),
-                3px 8px 15px rgba(139, 50, 50, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            cursor: pointer;
-            position: relative;
-            border: 4px solid rgba(0, 0, 0, 0.05);
-            transition: transform 0.1s;
-        }
-
-        .wax-seal:active {
-            transform: scale(0.96);
-        }
-
-        .wax-seal::after {
-            content: '';
-            position: absolute;
-            inset: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            opacity: 0.5;
-        }
+        .mode-ticket.active { background: #FFFDF5; border: 1px solid var(--accent-red); transform: translateY(-5px) rotate(-1deg); box-shadow: 0 8px 15px rgba(183, 65, 65, 0.15); }
 
         /* 卡片样式 */
-        .card-polaroid {
-            width: 300px;
-            height: 420px;
-            background: #fff;
-            padding: 12px 12px 60px 12px;
-            box-shadow: 0 10px 25px rgba(93, 64, 55, 0.15);
-            transform-origin: 50% 120%;
-            will-change: transform;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.03'/%3E%3C/svg%3E");
-        }
-
         .card-screenshot {
-            width: 280px;
-            height: 480px;
-            background: #F4F4F4;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-            border: 1px dashed #ccc;
+            width: 300px; height: 520px; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.08); border-radius: 2px;
+            position: relative; font-family: 'Courier Prime', monospace; color: #333; display: flex; flex-direction: column;
+            touch-action: none;
         }
-
-        .card-screenshot img {
-            object-fit: contain;
-            padding: 10px;
-        }
-
-        /* 悬浮撤销标签 */
-        .undo-sticker {
-            position: absolute;
-            bottom: 100px;
-            left: 24px;
-            background: #EFE3C8;
-            color: var(--text-primary);
-            padding: 8px 20px 8px 25px;
-            font-family: 'Patrick Hand';
-            font-size: 1.1rem;
-            transform: rotate(-3deg);
-            box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
-            clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 5% 50%);
-            cursor: pointer;
-            transition: 0.2s;
-            z-index: 60;
-        }
-
-        .undo-sticker:active {
-            transform: rotate(-3deg) scale(0.95);
-        }
-
-        /* 底部导航 */
-        .nav-bar {
-            background: var(--nav-bg);
-            height: 80px;
-            padding-bottom: 20px;
-            border-top: 1px solid rgba(0, 0, 0, 0.05);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .nav-icon {
-            opacity: 0.4;
-            transition: 0.3s;
-        }
-
-        .nav-icon.active {
-            opacity: 1;
-            color: var(--accent-red);
-            transform: translateY(-2px);
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .card-polaroid {
+            width: 300px; height: 420px; background: #fff; padding: 12px 12px 60px 12px;
+            box-shadow: 0 10px 25px rgba(93, 64, 55, 0.15); transform-origin: 50% 120%; will-change: transform;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1' numOctaves='1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.03'/%3E%3C/svg%3E");
+            touch-action: none;
         }
 
         /* 印章 */
-        .stamp-mark {
-            position: absolute;
-            z-index: 50;
-            opacity: 0;
-            pointer-events: none;
-            mix-blend-mode: multiply;
+        .stamp-mark { position: absolute; z-index: 50; opacity: 0; pointer-events: none; mix-blend-mode: multiply; }
+        .stamp-shred-style { border: 3px double #2D3748; color: #2D3748; padding: 5px 20px; font-family: 'Courier Prime', monospace; font-weight: bold; letter-spacing: 2px; transform: rotate(-15deg); }
+
+        /* 社区动态流样式 */
+        .feed-post {
+            background: #fff; padding: 16px; margin-bottom: 24px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
         }
+        .feed-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+        
+        /* 动态九宫格 */
+        .grid-photo-container { display: grid; gap: 4px; width: 100%; border-radius: 6px; overflow: hidden; }
+        .grid-photo-item { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: cover; cursor: pointer; border: 1px solid rgba(0,0,0,0.03); }
+
+        /* 发布页面文本域 */
+        .publish-textarea {
+            width: 100%; height: 100px; background: transparent; resize: none; outline: none;
+            font-family: 'Patrick Hand', cursive; font-size: 1.3rem; line-height: 1.8;
+            background-image: repeating-linear-gradient(transparent, transparent 31px, rgba(210, 180, 140, 0.4) 31px, rgba(210, 180, 140, 0.4) 32px);
+            padding-top: 6px; margin-bottom: 12px;
+        }
+        .publish-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        .publish-grid-item { aspect-ratio: 1 / 1; background: #fff; padding: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #eee; position: relative; }
+
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* 爱心点赞动画 */
+        .like-btn.liked { color: #e0245e; fill: #e0245e; animation: pop 0.3s ease-out; }
+        @keyframes pop { 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+        /* 图片放大灯箱效果 */
+        #photo-lightbox { backdrop-filter: blur(5px); transition: opacity 0.3s; }
     </style>
 </head>
-
 <body>
 
-    <!-- 手机外壳 -->
-    <div class="mobile-frame">
+    <div class="mobile-frame" id="app-frame">
         <div class="notch"></div>
         <div class="texture-overlay"></div>
-
+        
         <!-- 状态栏 -->
         <div class="flex justify-between px-6 pt-3 text-xs font-bold opacity-40 select-none relative z-10">
             <span>22:05</span>
@@ -304,243 +137,212 @@
             </div>
         </div>
 
-        <!-- App 内容 -->
         <div id="app-content" class="relative h-full flex flex-col pb-[80px]">
-
-            <!-- 1. 首页 -->
+            
+            <!-- 1. 首页 (Clean) -->
             <div id="page-home" class="flex-1 flex flex-col items-center pt-8 fade-in relative z-20">
                 <div class="text-center mb-6">
-                    <!-- 修改 2：个性化问候语 -->
                     <h1 class="text-2xl font-bold font-serif text-[#5D4037]">晚上好，林小舒</h1>
                     <p class="text-sm font-hand opacity-60">准备好整理回忆了吗？</p>
                 </div>
-
-                <!-- 进度环 -->
                 <div class="relative w-40 h-40 mb-8">
-                    <svg class="absolute inset-0 w-full h-full text-gray-200" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-dasharray="5,5" />
-                    </svg>
-                    <svg class="absolute inset-0 w-full h-full text-[#B74141] transform -rotate-90"
-                        viewBox="0 0 100 100">
-                        <circle id="progress-circle" class="hand-drawn-ring" cx="50" cy="50" r="45" fill="none"
-                            stroke="currentColor" stroke-width="4" stroke-linecap="round" />
-                    </svg>
+                    <svg class="absolute inset-0 w-full h-full text-gray-200" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5,5" /></svg>
+                    <svg class="absolute inset-0 w-full h-full text-[#B74141] transform -rotate-90" viewBox="0 0 100 100"><circle id="progress-circle" class="hand-drawn-ring" cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" /></svg>
                     <div class="absolute inset-0 flex flex-col items-center justify-center">
                         <span id="count-display" class="text-4xl font-hand font-bold text-[#5D4037]">0</span>
                         <span class="text-xs opacity-50 font-serif">/ 100</span>
                     </div>
                 </div>
-
-                <!-- 模式选择 -->
                 <div class="w-full mb-6">
                     <div class="mode-carousel">
-                        <div class="mode-ticket active" onclick="setMode('blitz', this)">
-                            <div class="text-2xl mb-1">⚡️</div>
-                            <div class="font-bold text-xs">闪电战</div>
-                            <div class="text-[9px] opacity-50 uppercase tracking-widest mt-1">Free</div>
-                        </div>
-                        <div class="mode-ticket" onclick="setMode('screenshot', this)">
-                            <div class="text-2xl mb-1">✂️</div>
-                            <div class="font-bold text-xs">截图粉碎</div>
-                            <div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO</div>
-                        </div>
-                        <div class="mode-ticket" onclick="setMode('timeline', this)">
-                            <div class="text-2xl mb-1">⏳</div>
-                            <div class="font-bold text-xs">时光机</div>
-                            <div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO</div>
-                        </div>
+                        <div class="mode-ticket active" onclick="setMode('blitz', this)"><div class="text-2xl mb-1">⚡️</div><div class="font-bold text-xs">闪电战</div><div class="text-[9px] opacity-50 uppercase tracking-widest mt-1">Free</div></div>
+                        <div class="mode-ticket" onclick="setMode('screenshot', this)"><div class="text-2xl mb-1">📄</div><div class="font-bold text-xs">截图粉碎</div><div class="text-[9px] bg-[#688F4E] text-white px-1 rounded mt-1">半价</div></div>
+                        <div class="mode-ticket" onclick="setMode('timeline', this)"><div class="text-2xl mb-1">⏳</div><div class="font-bold text-xs">时光机</div><div class="text-[9px] bg-black text-white px-1 rounded mt-1">PRO</div></div>
                     </div>
                 </div>
-
-                <!-- 开始按钮 -->
-                <div id="start-btn" class="wax-seal group relative z-30 transition-transform">
-                    <span
-                        class="text-white text-xl text-center leading-tight font-hand transform -rotate-6 drop-shadow-md">
-                        开始<br><span class="text-sm">整理</span>
-                    </span>
-                </div>
-
-                <!-- 体力条 -->
+                <div id="start-btn" class="w-[130px] h-[130px] bg-[#B74141] rounded-[50%] flex items-center justify-center text-white font-hand text-xl shadow-lg cursor-pointer transform transition active:scale-95 border-4 border-[#FDFBF7] z-30">开始<br>整理</div>
                 <div class="w-full text-center mt-4">
-                    <div class="washi-tape-bar">
-                        <div id="energy-bar" class="washi-tape-fill"></div>
-                    </div>
+                    <div class="washi-tape-bar"><div id="energy-bar" class="washi-tape-fill"></div></div>
                     <span class="text-[10px] opacity-40 font-serif tracking-widest">今日体力</span>
                 </div>
             </div>
 
-            <!-- 2. 整理界面 -->
-            <div id="page-swiper"
-                class="absolute inset-0 z-30 bg-[#FDFBF7] hidden flex-col items-center justify-center">
-                <div class="absolute top-12 left-0 w-full px-6 flex justify-between items-center z-40 opacity-50">
-                    <span onclick="goHome()" class="cursor-pointer text-sm font-serif">← 返回</span>
-                    <span class="font-hand">闪电战模式</span>
+            <!-- 2. 滑卡界面 (Swiper) -->
+            <div id="page-swiper" class="absolute inset-0 z-30 bg-transparent hidden flex-col items-center justify-center">
+                <div class="absolute top-12 left-0 w-full px-6 flex justify-between items-center z-40">
+                    <span onclick="goHome()" class="cursor-pointer text-sm font-serif opacity-60">← 返回</span>
+                    <span class="font-hand opacity-60" id="mode-title">闪电战模式</span>
                 </div>
-
-                <!-- 撤销按钮 -->
-                <div id="undo-btn" class="undo-sticker opacity-50 pointer-events-none">
-                    ↺ 撤销
-                </div>
-
-                <!-- 卡片堆叠 -->
-                <div id="card-stack" class="relative w-full h-full flex items-center justify-center">
-                    <!-- Cards injected via JS -->
-                </div>
-
-                <div id="guide-text"
-                    class="absolute bottom-6 w-full flex justify-center gap-12 font-hand text-lg opacity-40 pointer-events-none">
-                    <span class="text-[#B74141]">丢弃</span>
-                    <span class="text-[#688F4E]">保留</span>
+                <div id="card-stack" class="relative w-full h-full flex items-center justify-center"></div>
+                <div id="guide-text" class="absolute bottom-6 w-full flex justify-between px-12 font-hand text-lg opacity-40 pointer-events-none">
+                    <span class="text-[#B74141]" id="guide-left">← 丢弃</span>
+                    <span class="text-[#D4A373]">↑ 分享</span>
+                    <span class="text-[#688F4E]">保留 →</span>
                 </div>
             </div>
 
-            <!-- 3. 我的页面 -->
+            <!-- 3. 发布手账页面 (Publish) -->
+            <div id="page-publish" class="absolute inset-0 z-50 bg-[#FDFBF7] hidden flex-col">
+                <div class="flex justify-between items-center px-4 pt-14 pb-4 border-b border-[#D2B48C]/30 bg-white">
+                    <span onclick="cancelPublish()" class="cursor-pointer text-sm font-serif opacity-60 px-2 py-1">取消</span>
+                    <span class="font-hand text-xl">记录新回忆</span>
+                    <button onclick="submitPublish()" class="bg-[#B74141] text-white px-4 py-1.5 rounded text-sm font-bold shadow-sm active:scale-95 transition">发布</button>
+                </div>
+                <div class="flex-1 overflow-y-auto p-4 flex flex-col items-start w-full">
+                    <textarea id="publish-caption" class="publish-textarea" placeholder="写下这一刻的心情..."></textarea>
+                    <div class="text-xs opacity-50 mb-2 font-serif" id="publish-count-hint">已选 1/9</div>
+                    <div id="publish-images-container" class="publish-grid"></div>
+                </div>
+            </div>
+
+            <!-- 4. 社区流 (Community Wall) -->
+            <div id="page-community" class="flex-1 hidden flex-col pt-12 fade-in relative z-20 overflow-y-auto bg-[#F9F7F2]">
+                <div class="px-6 pb-2 mb-2 sticky top-0 bg-[#F9F7F2]/90 backdrop-blur z-30 flex justify-between items-center">
+                    <div class="w-6"></div>
+                    <h1 class="text-2xl font-serif text-[#5D4037] text-center font-bold">回忆墙</h1>
+                    <div class="cursor-pointer opacity-80 text-[#B74141]" onclick="openPublishPage()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </div>
+                </div>
+                <div id="feed-container" class="pb-6">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 新增 4.5: 个人动态页 (User Posts) -->
+            <div id="page-user-feed" class="flex-1 hidden flex-col pt-12 fade-in relative z-30 overflow-y-auto bg-[#F9F7F2]">
+                <div class="px-6 pb-2 mb-2 sticky top-0 bg-[#F9F7F2]/90 backdrop-blur z-30 flex justify-between items-center border-b border-black/5">
+                    <span onclick="closeUserFeed()" class="cursor-pointer text-sm font-serif opacity-60">← 返回</span>
+                    <h1 class="text-xl font-serif text-[#5D4037] text-center font-bold" id="user-feed-title">我的动态</h1>
+                    <div class="w-10"></div> <!-- 占位符保证标题居中 -->
+                </div>
+                <div id="user-feed-container" class="pb-6">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
+            <!-- 5. 我的页面 (Me) -->
             <div id="page-profile" class="flex-1 hidden flex-col pt-12 px-6 fade-in relative z-20 overflow-y-auto">
                 <div class="flex items-center gap-4 mb-8">
-                    <div class="w-20 h-20 bg-white p-1 shadow-md transform -rotate-3" style="border-radius: 4px;">
-                        <img src="https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=200"
-                            class="w-full h-full object-cover grayscale-[0.2]">
-                    </div>
+                    <div class="w-20 h-20 bg-white p-1 shadow-md transform -rotate-3 rounded"><img src="https://images.unsplash.com/photo-1544168190-79c11c9e85ee?auto=format&fit=crop&w=200" class="w-full h-full object-cover"></div>
                     <div>
                         <h2 class="text-2xl font-serif font-bold text-[#5D4037]">林小舒</h2>
-                        <!-- 修改 1：会员标识展示在名称下方 -->
-                        <div id="vip-badge-container" class="mt-2">
-                            <span id="badge-free"
-                                class="inline-block text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">免费版</span>
-                            <span id="badge-pro"
-                                class="hidden inline-block text-[10px] bg-black text-[#F0E68C] px-2 py-0.5 rounded-full border border-[#F0E68C]">永久会员</span>
+                        <div class="mt-2">
+                            <span id="badge-free" class="inline-block text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">免费版</span>
+                            <span id="badge-pro" class="hidden inline-block text-[10px] bg-black text-[#F0E68C] px-2 py-0.5 rounded-full border border-[#F0E68C]">永久会员</span>
                         </div>
                     </div>
                 </div>
-
                 <div class="grid grid-cols-2 gap-4 mb-8">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center">
-                        <div class="text-xs opacity-50 font-serif">已释放空间</div>
-                        <div class="text-2xl font-bold font-hand text-[#688F4E]">1.2 <span class="text-sm">GB</span>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center">
-                        <div class="text-xs opacity-50 font-serif">连续打卡</div>
-                        <div class="text-2xl font-bold font-hand text-[#B74141]">12 <span class="text-sm">天</span></div>
-                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center"><div class="text-xs opacity-50 font-serif">已释放空间</div><div class="text-2xl font-bold font-hand text-[#688F4E]">1.2 GB</div></div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 text-center"><div class="text-xs opacity-50 font-serif">连续打卡</div><div class="text-2xl font-bold font-hand text-[#B74141]">12 天</div></div>
                 </div>
-
-                <!-- 修改 3：菜单排序与内容调整 -->
                 <div class="space-y-4">
-                    <div
-                        class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer">
-                        <span>历史日志</span>
-                        <span class="opacity-40">→</span>
-                    </div>
-                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"
-                        onclick="document.getElementById('paywall').classList.remove('hidden')">
-                        <span>会员中心</span>
-                        <span class="opacity-40">→</span>
-                    </div>
-                    <div
-                        class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer">
-                        <span>设置</span>
-                        <span class="opacity-40">→</span>
-                    </div>
-                    <div
-                        class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer">
-                        <span>关于</span>
-                        <span class="opacity-40">→</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. 时光机（月份选择） -->
-            <div id="page-timeline" class="absolute inset-0 z-30 bg-[#FDFBF7] hidden flex-col">
-                <div class="px-6 py-6 flex items-center justify-between">
-                    <h2 class="text-2xl font-serif font-bold text-[#5D4037]">时光机</h2>
-                    <button onclick="goHome()" class="text-sm font-hand opacity-60">关闭</button>
-                </div>
-                <div class="px-6 pb-20 overflow-y-auto" id="timeline-list">
-                    <!-- Month items injected here -->
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer" onclick="openUserFeed('林小舒', 'profile')"><span>我的动态</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>历史日志</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer" onclick="document.getElementById('paywall').classList.remove('hidden')"><span>会员中心</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>设置</span><span class="opacity-40">→</span></div>
+                    <div class="border-b border-dashed border-[#D2B48C] pb-2 flex justify-between font-hand text-lg cursor-pointer"><span>关于</span><span class="opacity-40">→</span></div>
                 </div>
             </div>
 
             <!-- 付费弹窗 -->
-            <div id="paywall"
-                class="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-6">
+            <div id="paywall" class="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-6">
                 <div class="bg-[#FFFBF0] w-full max-w-sm p-6 rounded-2xl shadow-2xl relative text-center">
-                    <div class="text-4xl mb-2">👑</div>
-                    <h3 class="text-xl font-bold font-serif mb-2">升级会员</h3>
+                    <div class="text-4xl mb-2">👑</div><h3 class="text-xl font-bold font-serif mb-2">升级会员</h3>
                     <p class="text-sm opacity-70 font-hand mb-6">解锁所有模式与无限体力。</p>
-                    <button onclick="unlockPro()"
-                        class="w-full py-3 bg-[#5D4037] text-white rounded-xl font-bold shadow-lg mb-3">立即解锁</button>
-                    <button onclick="document.getElementById('paywall').classList.add('hidden')"
-                        class="text-xs opacity-50 underline">以后再说</button>
+                    <button onclick="unlockPro()" class="w-full py-3 bg-[#5D4037] text-white rounded-xl font-bold shadow-lg mb-3">立即解锁</button>
+                    <button onclick="document.getElementById('paywall').classList.add('hidden')" class="text-xs opacity-50 underline">以后再说</button>
                 </div>
             </div>
 
-        </div>
+            <!-- 照片放大灯箱层 -->
+            <div id="photo-lightbox" class="absolute inset-0 z-[1000] bg-black/90 hidden flex-col items-center justify-center">
+                <div class="absolute top-14 right-6 text-white opacity-70 p-2 cursor-pointer" onclick="closeLightbox()">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+                <img id="lightbox-img" src="" class="w-full max-h-[70vh] object-contain">
+            </div>
+
+        </div> 
 
         <!-- 底部 Tab -->
-        <nav class="absolute bottom-0 w-full nav-bar z-40">
-            <div id="tab-home" class="nav-icon active flex flex-col items-center cursor-pointer"
-                onclick="switchTab('home')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
+        <nav class="absolute bottom-0 w-full h-[80px] bg-[#F9F7F2] border-t border-black/5 flex justify-around items-center pb-5 z-40">
+            <div id="tab-home" class="opacity-100 text-[#B74141] flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('home')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
                 <span class="text-[10px] font-serif mt-1">整理</span>
             </div>
-            <div id="tab-me" class="nav-icon flex flex-col items-center cursor-pointer" onclick="switchTab('profile')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                </svg>
+            <div id="tab-community" class="opacity-40 flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('community')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                <span class="text-[10px] font-serif mt-1">社区</span>
+            </div>
+            <div id="tab-me" class="opacity-40 flex flex-col items-center cursor-pointer transition-all" onclick="switchTab('profile')">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 <span class="text-[10px] font-serif mt-1">我的</span>
             </div>
         </nav>
-
     </div>
 
     <script>
-        const state = {
-            count: 0,
-            limit: 100,
-            isPro: false,
-            mode: 'blitz',
-            history: [],
-            selectedMonth: null // 'YYYY-MM'
-        };
+        const state = { count: 0, limit: 100, isPro: false, mode: 'blitz', pendingShareImgs: [], publishSource: '', userFeedSource: 'community' };
 
         const photos = [
-            { src: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&q=80', date: '2023-10-15', label: '宝宝的第一步', type: 'photo' },
-            { src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80', date: '2023-10-20', label: '聊天记录截图', type: 'screenshot' },
-            { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80', date: '2023-09-05', label: '晴朗的周日', type: 'photo' },
-            { src: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=400&q=80', date: '2023-09-12', label: '自然风光', type: 'photo' },
-            { src: 'https://images.unsplash.com/photo-1504297050568-910d24c426d3?auto=format&fit=crop&w=400&q=80', date: '2023-08-28', label: '咖啡时光', type: 'photo' }
+            { src: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=400&q=80', date: '宝宝的第一步', type: 'photo' },
+            { src: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=400&q=80', date: '晴朗的周日', type: 'photo' },
+            { src: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=400&q=80', date: '2023-10-12 14:30', info: 'WeChat_2023...jpg', size: '2.4MB', type: 'screenshot' }
+        ];
+
+        const mockGallery = [
+            'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=400&q=80',
+            'https://images.unsplash.com/photo-1505935428862-770b6f24f629?w=400&q=80',
+            'https://images.unsplash.com/photo-1536640712-4d4c36ef0e2c?w=400&q=80',
+            'https://images.unsplash.com/photo-1555252117-426bfb772091?w=400&q=80'
+        ];
+
+        // 全局社区数据
+        let feedData = [
+            { 
+                user: '林小舒', avatar: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=100', 
+                imgs: ['https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400&q=80'], 
+                caption: '第一次记录，清爽的开始！', likes: 15, isLiked: false 
+            },
+            { 
+                user: 'Summer', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100', 
+                imgs: [
+                    'https://images.unsplash.com/photo-1505935428862-770b6f24f629?w=400&q=80',
+                    'https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400&q=80',
+                    'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80',
+                    'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=400&q=80'
+                ], 
+                caption: '去公园撒野的碎片记录，太废妈了！', likes: 24, isLiked: false 
+            },
+            { 
+                user: '小石头爸爸', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100', 
+                imgs: ['https://images.unsplash.com/photo-1536640712-4d4c36ef0e2c?w=400&q=80'], 
+                caption: '睡觉的样子最可爱。', likes: 12, isLiked: false 
+            }
         ];
 
         function switchTab(tab) {
-            document.getElementById('page-home').classList.add('hidden');
-            document.getElementById('page-profile').classList.add('hidden');
-            document.getElementById('page-swiper').classList.add('hidden');
+            ['page-home', 'page-community', 'page-profile', 'page-swiper', 'page-publish', 'page-user-feed'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(`page-${tab}`).classList.remove('hidden');
+            
+            ['home', 'community', 'me'].forEach(t => {
+                const el = document.getElementById(`tab-${t === 'profile' ? 'me' : t}`);
+                if(t === tab || (tab==='profile' && t==='me')) {
+                    el.classList.replace('opacity-40', 'opacity-100');
+                    el.classList.add('text-[#B74141]');
+                } else {
+                    el.classList.replace('opacity-100', 'opacity-40');
+                    el.classList.remove('text-[#B74141]');
+                }
+            });
 
-            document.getElementById('tab-home').classList.remove('active');
-            document.getElementById('tab-me').classList.remove('active');
-
-            if (tab === 'home') {
-                document.getElementById('page-home').classList.remove('hidden');
-                document.getElementById('tab-home').classList.add('active');
-            } else {
-                document.getElementById('page-profile').classList.remove('hidden');
-                document.getElementById('tab-me').classList.add('active');
-            }
+            if (tab === 'community') renderFeed();
         }
 
         function setMode(mode, el) {
-            if (mode !== 'blitz' && !state.isPro) {
-                document.getElementById('paywall').classList.remove('hidden');
-                return;
-            }
+            if(mode === 'timeline' && !state.isPro) { document.getElementById('paywall').classList.remove('hidden'); return; }
             state.mode = mode;
             document.querySelectorAll('.mode-ticket').forEach(e => e.classList.remove('active'));
             el.classList.add('active');
@@ -549,222 +351,313 @@
         function unlockPro() {
             state.isPro = true;
             document.getElementById('paywall').classList.add('hidden');
-            // 更新会员标识
             document.getElementById('badge-free').classList.add('hidden');
             document.getElementById('badge-pro').classList.remove('hidden');
             alert("✨ 会员已解锁！");
         }
 
         document.getElementById('start-btn').addEventListener('click', () => {
-            if (state.mode === 'timeline') {
-                renderTimeline();
-                document.getElementById('page-home').classList.add('hidden');
-                document.getElementById('page-timeline').classList.remove('hidden');
-                document.querySelector('.nav-bar').classList.add('hidden');
-            } else {
-                state.selectedMonth = null;
-                document.getElementById('page-home').classList.add('hidden');
-                document.getElementById('page-swiper').classList.remove('hidden');
-                document.querySelector('.nav-bar').classList.add('hidden');
-                initCards();
-            }
+            document.getElementById('page-home').classList.add('hidden');
+            document.getElementById('page-swiper').classList.remove('hidden');
+            document.querySelector('nav').classList.add('hidden');
+            initCards();
         });
 
         function goHome() {
             document.getElementById('page-swiper').classList.add('hidden');
-            document.getElementById('page-timeline').classList.add('hidden');
             document.getElementById('page-home').classList.remove('hidden');
-            document.querySelector('.nav-bar').classList.remove('hidden');
-            updateDashboard();
-        }
-
-        function renderTimeline() {
-            const container = document.getElementById('timeline-list');
-            container.innerHTML = '';
-
-            // Group photos by month
-            const groups = {};
-            photos.forEach(p => {
-                const month = p.date.substring(0, 7); // YYYY-MM
-                if (!groups[month]) groups[month] = 0;
-                groups[month]++;
-            });
-
-            // Sort months descending
-            const sortedMonths = Object.keys(groups).sort().reverse();
-
-            sortedMonths.forEach(month => {
-                const count = groups[month];
-                const [y, m] = month.split('-');
-
-                const item = document.createElement('div');
-                item.className = 'bg-white p-4 rounded-xl shadow-sm mb-4 flex justify-between items-center cursor-pointer active:scale-95 transition-transform border border-gray-100';
-                item.onclick = () => {
-                    state.selectedMonth = month;
-                    document.getElementById('page-timeline').classList.add('hidden');
-                    document.getElementById('page-swiper').classList.remove('hidden');
-                    initCards();
-                };
-
-                item.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-[#F9F7F2] rounded-full flex items-center justify-center text-xl border border-[#E6D2B5]">
-                            📅
-                        </div>
-                        <div>
-                            <div class="font-bold text-[#5D4037] font-serif text-lg">${y}年 ${m}月</div>
-                            <div class="text-xs text-gray-400 font-hand">${count} 张照片 awaiting</div>
-                        </div>
-                    </div>
-                    <div class="text-[#B74141] font-bold font-hand text-xl">Go →</div>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        function updateDashboard() {
+            document.querySelector('nav').classList.remove('hidden');
             document.getElementById('count-display').innerText = state.count;
-            const offset = 283 - (state.count / 100) * 283;
-            document.getElementById('progress-circle').style.strokeDashoffset = offset;
-
-            const energyPct = Math.max(0, 100 - state.count);
-            document.getElementById('energy-bar').style.width = energyPct + '%';
+            document.getElementById('progress-circle').style.strokeDashoffset = 283 - (state.count / 100) * 283;
+            document.getElementById('energy-bar').style.width = Math.max(0, 100 - state.count) + '%';
         }
 
         function initCards() {
             const container = document.getElementById('card-stack');
             container.innerHTML = '';
-            state.history = [];
-
-            let displayPhotos = [...photos];
-
-            // Filter by mode
-            if (state.mode === 'screenshot') {
-                displayPhotos = displayPhotos.filter(p => p.type === 'screenshot');
-            } else if (state.mode === 'timeline' && state.selectedMonth) {
-                displayPhotos = displayPhotos.filter(p => p.date.startsWith(state.selectedMonth));
-            }
-
-            const sessionPhotos = [...displayPhotos, ...displayPhotos];
+            let sessionPhotos = state.mode === 'screenshot' ? photos.filter(p => p.type === 'screenshot') : photos.filter(p => p.type === 'photo');
+            if(sessionPhotos.length < 5) sessionPhotos = [...sessionPhotos, ...sessionPhotos, ...sessionPhotos];
 
             sessionPhotos.forEach((p, i) => {
                 const card = document.createElement('div');
-                card.className = `absolute top-1/2 left-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing 
-                    ${state.mode === 'screenshot' ? 'card-screenshot' : 'card-polaroid'}`;
-                card.style.transform = `translate(-50%, -50%) rotate(${state.mode === 'screenshot' ? 0 : Math.random() * 4 - 2}deg)`;
+                const isScreenshot = state.mode === 'screenshot';
+                card.className = `absolute top-1/2 left-1/2 flex flex-col items-center cursor-grab active:cursor-grabbing ${isScreenshot ? 'card-screenshot' : 'card-polaroid'}`;
+                card.style.transform = `translate(-50%, -50%) rotate(${isScreenshot ? 0 : Math.random()*4-2}deg)`;
                 card.style.zIndex = 100 - i;
-
-                card.innerHTML = `
-                    <div class="flex-1 w-full overflow-hidden relative ${state.mode === 'screenshot' ? '' : 'bg-gray-100'}">
-                        <img src="${p.src}" class="w-full h-full ${state.mode === 'screenshot' ? 'object-contain' : 'object-cover'} pointer-events-none">
-                    </div>
-                    ${state.mode === 'screenshot' ? '' : `<div class="py-4 font-hand text-xl opacity-70">${p.label || p.date}</div>`}
-                    
-                    <div class="stamp-mark top-12 right-8 transform -rotate-12 border-4 border-[#B74141] text-[#B74141] p-2 rounded font-hand font-bold text-xl opacity-0 stamp-del">
-                        DISCARD
-                    </div>
-                    <div class="stamp-mark bottom-20 left-8 transform rotate-12 border-4 border-[#688F4E] text-[#688F4E] p-2 rounded-full font-hand font-bold text-xl opacity-0 stamp-keep">
-                        KEEP
-                    </div>
-                `;
-
+                card.dataset.src = p.src; 
+                
+                if (isScreenshot) {
+                    card.innerHTML = `
+                        <div class="flex-1 w-full overflow-hidden p-4"><img src="${p.src}" class="w-full h-full object-contain pointer-events-none border border-gray-200"></div>
+                        <div class="px-5 pb-5 w-full text-xs font-mono text-gray-500 flex flex-col gap-1">
+                            <div class="border-t border-dashed border-gray-300 pt-2 flex justify-between"><span>NAME:</span><span>${p.info}</span></div>
+                        </div>
+                        <div class="stamp-mark top-24 right-8 opacity-0 stamp-del stamp-shred-style">SHREDDED</div>
+                        <div class="stamp-mark bottom-20 left-8 transform rotate-12 border-4 border-[#688F4E] text-[#688F4E] p-2 rounded-full font-hand font-bold text-xl opacity-0 stamp-keep">KEEP</div>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="flex-1 w-full overflow-hidden relative bg-gray-100"><img src="${p.src}" class="w-full h-full object-cover pointer-events-none"></div>
+                        <div class="py-4 font-hand text-xl opacity-70">${p.date}</div>
+                        <div class="stamp-mark top-12 right-8 transform -rotate-12 border-4 border-[#B74141] text-[#B74141] p-2 rounded font-hand font-bold text-xl opacity-0 stamp-del">DISCARD</div>
+                        <div class="stamp-mark bottom-20 left-8 transform rotate-12 border-4 border-[#688F4E] text-[#688F4E] p-2 rounded-full font-hand font-bold text-xl opacity-0 stamp-keep">KEEP</div>
+                        <div class="stamp-mark top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-4 border-[#D4A373] text-[#D4A373] p-3 rounded font-hand font-bold text-3xl opacity-0 stamp-share bg-white/80">SHARE</div>
+                    `;
+                }
                 container.appendChild(card);
-                if (i === 0) setupSwipe(card);
+                if(i === 0) setupSwipe(card);
             });
-
-            if (container.children.length === 0) {
-                alert("此模式下暂无照片！");
-                goHome();
-            }
         }
 
         function setupSwipe(card) {
-            let startX = 0, currentX = 0, isDragging = false;
-            const threshold = 100;
+            let startX = 0, startY = 0, currentX = 0, currentY = 0, isDragging = false;
+            const thresholdX = 100;
+            const thresholdY = -100; 
+
             const sDel = card.querySelector('.stamp-del');
             const sKeep = card.querySelector('.stamp-keep');
+            const sShare = card.querySelector('.stamp-share'); 
 
-            const start = (x) => { isDragging = true; startX = x; card.style.transition = 'none'; };
+            const start = (e) => { 
+                isDragging = true; 
+                startX = e.clientX || e.touches[0].clientX; 
+                startY = e.clientY || e.touches[0].clientY; 
+                card.style.transition = 'none'; 
+            };
+            
+            const move = (e) => {
+                if(!isDragging) return;
+                currentX = (e.clientX || e.touches[0].clientX) - startX;
+                currentY = (e.clientY || e.touches[0].clientY) - startY;
+                
+                const isVertical = Math.abs(currentY) > Math.abs(currentX) * 0.5 && currentY < 0;
 
-            const move = (x) => {
-                if (!isDragging) return;
-                currentX = x - startX;
-                const rot = currentX * 0.1;
-                card.style.transform = `translate(calc(-50% + ${currentX}px), -50%) rotate(${rot}deg)`;
-
-                if (currentX < 0) {
-                    sDel.style.opacity = Math.min(-currentX / threshold, 1);
-                    sKeep.style.opacity = 0;
+                if (isVertical && sShare) {
+                    card.style.transform = `translate(calc(-50% + ${currentX*0.2}px), calc(-50% + ${currentY}px)) rotate(0deg)`;
+                    sShare.style.opacity = Math.min(Math.abs(currentY)/100, 1);
+                    if(sDel) sDel.style.opacity = 0; if(sKeep) sKeep.style.opacity = 0;
                 } else {
-                    sKeep.style.opacity = Math.min(currentX / threshold, 1);
-                    sDel.style.opacity = 0;
+                    const rot = state.mode === 'screenshot' ? 0 : currentX * 0.1;
+                    card.style.transform = `translate(calc(-50% + ${currentX}px), -50%) rotate(${rot}deg)`;
+                    if(sShare) sShare.style.opacity = 0;
+                    if(currentX < 0) {
+                        if(sDel) sDel.style.opacity = Math.min(-currentX/thresholdX, 1);
+                        if(sKeep) sKeep.style.opacity = 0;
+                    } else {
+                        if(sKeep) sKeep.style.opacity = Math.min(currentX/thresholdX, 1);
+                        if(sDel) sDel.style.opacity = 0;
+                    }
                 }
             };
-
+            
             const end = () => {
-                if (!isDragging) return; isDragging = false;
-                if (Math.abs(currentX) > threshold) {
+                if(!isDragging) return; isDragging = false;
+                const isVertical = Math.abs(currentY) > Math.abs(currentX) * 0.5 && currentY < 0;
+
+                if (isVertical && currentY < thresholdY && sShare) {
+                    card.style.transition = 'transform 0.4s ease-out';
+                    card.style.transform = `translate(-50%, -800px) rotate(0deg)`;
+                    setTimeout(() => {
+                        openPublishPage(card.dataset.src);
+                        card.remove();
+                        const next = document.getElementById('card-stack').firstElementChild;
+                        if(next) setupSwipe(next); else goHome();
+                    }, 300);
+                }
+                else if(!isVertical && Math.abs(currentX) > thresholdX) {
                     const isDel = currentX < 0;
                     card.style.transition = 'transform 0.4s ease-out';
                     card.style.transform = `translate(calc(-50% + ${isDel ? -500 : 500}px), -50%) rotate(${isDel ? -45 : 45}deg)`;
-
-                    if (isDel && !state.isPro) state.count++;
-
-                    state.history.push({ card: card.cloneNode(true), isDel });
-                    document.getElementById('undo-btn').classList.remove('opacity-50', 'pointer-events-none');
-
+                    if(isDel) state.count++;
                     setTimeout(() => {
                         card.remove();
-                        const nextCard = document.getElementById('card-stack').firstElementChild;
-                        if (nextCard) setupSwipe(nextCard);
-                        else {
-                            alert("本次整理完成！");
-                            goHome();
-                        }
+                        const next = document.getElementById('card-stack').firstElementChild;
+                        if(next) setupSwipe(next); else goHome();
                     }, 300);
                 } else {
-                    card.style.transition = 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+                    card.style.transition = 'transform 0.3s ease';
                     card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-                    sDel.style.opacity = 0; sKeep.style.opacity = 0;
+                    if(sDel) sDel.style.opacity = 0; if(sKeep) sKeep.style.opacity = 0; if(sShare) sShare.style.opacity = 0;
                 }
             };
 
-            card.addEventListener('touchstart', e => start(e.touches[0].clientX));
-            window.addEventListener('touchmove', e => move(e.touches[0].clientX));
-            window.addEventListener('touchend', end);
-
-            card.addEventListener('mousedown', e => start(e.clientX));
-            window.addEventListener('mousemove', e => move(e.clientX));
-            window.addEventListener('mouseup', end);
+            card.addEventListener('touchstart', start); window.addEventListener('touchmove', move); window.addEventListener('touchend', end);
+            card.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
         }
 
-        document.getElementById('undo-btn').addEventListener('click', () => {
-            if (state.history.length === 0) return;
-            const last = state.history.pop();
-            const container = document.getElementById('card-stack');
+        function openPublishPage(src) {
+            state.publishSource = src ? 'swiper' : 'community'; 
+            state.pendingShareImgs = src ? [src] : []; 
+            document.getElementById('publish-caption').value = '';
+            
+            ['page-home', 'page-community', 'page-profile', 'page-swiper', 'page-user-feed'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('page-publish').classList.remove('hidden');
+            document.querySelector('nav').classList.add('hidden');
+            renderPublishGrid();
+        }
 
-            if (last.isDel) state.count--;
+        function renderPublishGrid() {
+            const container = document.getElementById('publish-images-container');
+            const counter = document.getElementById('publish-count-hint');
+            container.innerHTML = '';
+            counter.innerText = `已选 ${state.pendingShareImgs.length}/9`;
 
-            const card = last.card;
-            card.style.transition = 'none';
-            card.style.transform = `translate(calc(-50% + ${last.isDel ? -500 : 500}px), -50%) rotate(0deg)`;
-            container.insertBefore(card, container.firstChild);
-
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    card.style.transition = 'transform 0.4s ease-out';
-                    card.style.transform = `translate(-50%, -50%) rotate(0deg)`;
-                });
+            state.pendingShareImgs.forEach((src) => {
+                container.innerHTML += `<div class="publish-grid-item rounded"><img src="${src}" class="w-full h-full object-cover rounded-sm"></div>`;
             });
 
-            setupSwipe(card);
-
-            if (state.history.length === 0) {
-                document.getElementById('undo-btn').classList.add('opacity-50', 'pointer-events-none');
+            if (state.pendingShareImgs.length < 9) {
+                container.innerHTML += `
+                    <div class="publish-grid-item rounded flex items-center justify-center bg-gray-50 border-dashed border-gray-300 cursor-pointer" onclick="mockAddPublishPhoto()">
+                        <span class="text-3xl text-gray-300">+</span>
+                    </div>`;
             }
-        });
+        }
+
+        function mockAddPublishPhoto() {
+            if (state.pendingShareImgs.length >= 9) return;
+            const randomImg = mockGallery[Math.floor(Math.random() * mockGallery.length)];
+            state.pendingShareImgs.push(randomImg);
+            renderPublishGrid();
+        }
+
+        function cancelPublish() {
+            document.getElementById('page-publish').classList.add('hidden');
+            if (state.publishSource === 'community') {
+                document.getElementById('page-community').classList.remove('hidden');
+                document.querySelector('nav').classList.remove('hidden');
+            } else {
+                document.getElementById('page-swiper').classList.remove('hidden');
+            }
+        }
+
+        function submitPublish() {
+            if (state.pendingShareImgs.length === 0) { alert('请至少添加一张图片'); return; }
+            const caption = document.getElementById('publish-caption').value || '记录今天的美好！';
+            feedData.unshift({
+                user: '林小舒', avatar: 'https://images.unsplash.com/photo-1544168190-79c11c9e85ee?w=100',
+                imgs: [...state.pendingShareImgs], caption: caption, likes: 0, isLiked: false
+            });
+            document.getElementById('page-publish').classList.add('hidden');
+            document.querySelector('nav').classList.remove('hidden');
+            switchTab('community');
+        }
+
+        // --- 核心：渲染单个动态卡片 HTML ---
+        function createPostHTML(post, index) {
+            let gridCols = 1;
+            if (post.imgs.length === 2 || post.imgs.length === 4) gridCols = 2;
+            else if (post.imgs.length >= 3) gridCols = 3;
+
+            let imagesHTML = `<div class="grid-photo-container mb-3" style="grid-template-columns: repeat(${gridCols}, 1fr);">`;
+            post.imgs.forEach(img => {
+                const imgClass = post.imgs.length === 1 ? 'w-full h-auto object-cover max-h-[400px] cursor-pointer rounded' : 'grid-photo-item';
+                imagesHTML += `<img src="${img}" class="${imgClass}" onclick="openLightbox('${img}')">`;
+            });
+            imagesHTML += `</div>`;
+
+            return `
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2 cursor-pointer transition active:scale-95" onclick="openUserFeed('${post.user}', 'community')">
+                        <img src="${post.avatar}" class="feed-avatar">
+                        <span class="font-bold font-serif text-sm">${post.user}</span>
+                    </div>
+                    <div class="opacity-50 cursor-pointer p-2" onclick="alert('举报已提交，管理员将尽快核实。')">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    </div>
+                </div>
+                ${imagesHTML}
+                <div class="flex gap-4 mb-2">
+                    <svg class="like-btn cursor-pointer w-6 h-6 ${post.isLiked ? 'liked' : ''}" onclick="toggleLike(this, ${index})" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                    <svg class="cursor-pointer w-6 h-6 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                </div>
+                <div class="text-sm font-bold mb-1"><span class="like-count">${post.likes}</span> 次赞</div>
+                <div class="text-sm font-hand text-lg mt-1 leading-snug"><span class="font-serif font-bold text-sm mr-2">${post.user}</span>${post.caption}</div>
+            `;
+        }
+
+        // --- 社区页面逻辑 ---
+        function renderFeed() {
+            const container = document.getElementById('feed-container');
+            container.innerHTML = '';
+            feedData.forEach((post, globalIndex) => {
+                const el = document.createElement('div');
+                el.className = 'feed-post';
+                el.innerHTML = createPostHTML(post, globalIndex);
+                container.appendChild(el);
+            });
+        }
+
+        // --- 个人动态页逻辑 ---
+        function openUserFeed(username, source = 'community') {
+            state.userFeedSource = source; // 记录来源
+            
+            ['page-home', 'page-community', 'page-profile', 'page-swiper', 'page-publish'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById('page-user-feed').classList.remove('hidden');
+            
+            // 动态修改标题
+            document.getElementById('user-feed-title').innerText = username === '林小舒' ? '我的动态' : `${username} 的动态`;
+            
+            const container = document.getElementById('user-feed-container');
+            container.innerHTML = '';
+            
+            const userPosts = feedData.map((post, index) => ({post, index})).filter(item => item.post.user === username);
+            
+            if (userPosts.length === 0) {
+                container.innerHTML = '<div class="text-center opacity-40 mt-20 font-hand text-lg">暂无动态记录</div>';
+                return;
+            }
+
+            userPosts.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'feed-post';
+                el.innerHTML = createPostHTML(item.post, item.index);
+                container.appendChild(el);
+            });
+        }
+
+        function closeUserFeed() {
+            document.getElementById('page-user-feed').classList.add('hidden');
+            if (state.userFeedSource === 'profile') {
+                document.getElementById('page-profile').classList.remove('hidden');
+            } else {
+                document.getElementById('page-community').classList.remove('hidden');
+                renderFeed(); // 重新渲染社区以同步可能发生的点赞状态
+            }
+        }
+
+        // --- 点赞与灯箱逻辑 ---
+        function toggleLike(el, globalIndex) {
+            const post = feedData[globalIndex];
+            post.isLiked = !post.isLiked;
+            if(post.isLiked) {
+                post.likes++;
+                el.classList.add('liked');
+            } else {
+                post.likes--;
+                el.classList.remove('liked');
+            }
+            // 局部更新文字节点
+            el.parentElement.nextElementSibling.innerHTML = `<span class="like-count">${post.likes}</span> 次赞`;
+        }
+
+        function openLightbox(src) {
+            const lightbox = document.getElementById('photo-lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = src;
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+            img.style.transform = 'scale(0.9)';
+            setTimeout(() => { img.style.transform = 'scale(1)'; img.style.transition = 'transform 0.2s ease-out'; }, 10);
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('photo-lightbox');
+            lightbox.classList.add('hidden');
+            lightbox.classList.remove('flex');
+            document.getElementById('lightbox-img').style.transition = 'none';
+        }
 
     </script>
 </body>
-
 </html>
